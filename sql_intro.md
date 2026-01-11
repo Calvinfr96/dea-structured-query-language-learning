@@ -1,8 +1,7 @@
-/*
-Tips for Mastering SQL:
+# Tips for Mastering SQL
 - SQL stands for Structured Query Language is what's used for querying databases and data stores in the field of data engineering.
 - It is the number one data skill used in data engineering and data analysis.
-- SQL profeciency will be assessed in almost every interview for a data-related role, with the exception of senior positions.
+- SQL proficiency will be assessed in almost every interview for a data-related role, with the exception of senior positions.
 - Make sure to prioritize the lessons outlined in your personalized plan, don't go through all of the lessons on the DEA website.
 
 Tips for Completing SQL Lessons:
@@ -14,7 +13,7 @@ Tips for Completing SQL Lessons:
 - When asking questions on Slack, make sure to take screenshots of the question your stuck on and give the full path the question on the DEA website, not just the link.
   - Also COPY THE CODE YOU TRIED TO WRITE THAT'S NOT WORKING so you and your coach can troubleshoot together.
 - After completing the lessons, do the practice questions (the number of questions outlined in your plan).
-  - Completing these practice questions is where you truly begin to guage whether you've mastered a concept, take them seriously.
+  - Completing these practice questions is where you truly begin to gauge whether you've mastered a concept, take them seriously.
   - It's expected that you will need to refer back to the relevant lessons you've completed.
   - It's also expected to get stuck. Don't waste too much time getting stuck. Reach out on Slack and the coaching sessions.
   - Also, after looking at the solution, come back to the question 2 days later and attempt to do it again.
@@ -29,5 +28,4 @@ General Tips:
   - The syntax for these types of functions varies for different "flavors" of SQL anyways.
   - As long as you generally know the type of function needed to solve the interview problem, you will be okay.
 - For interview prep, also make sure to practice your timing and talking out load. LOOK INTO SPEECH THERAPY.
-  - Don't focus on your speed until you've gone through the questions at least once though. 
-*/
+  - Don't focus on your speed until you've gone through the questions at least once though.
