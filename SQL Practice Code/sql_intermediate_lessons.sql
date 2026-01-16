@@ -694,7 +694,7 @@ ON c.customer_id = o.customer_id; -- Correct!
   | 104      | 2023-04-05 | 300.00        | 3           | Completed    | 789 Pine Boulevard    |
   | 105      | 2023-05-12 | 150.00        | 2           | Shipped      | 456 Oak Avenue        |
   | 106      | 2023-06-08 | 200.00        | 1           | Completed    | 123 Main Street       |
-| 107      | 2023-07-15 | 220.00        | 2           | Shipped      | 456 Oak Avenue        |
+  | 107      | 2023-07-15 | 220.00        | 2           | Shipped      | 456 Oak Avenue        |
 */
 
 SELECT
@@ -837,31 +837,31 @@ AND c.address = o.shipping_address; -- Correct!
 
 
 /*
-Question 19: SELF JOIN
+  Question 19: SELF JOIN
 
-Retrieve pairs of employees who share the same manager. Display first employee_id AS employee1_id, first employee's first_name & last_name combined as employee1_name, second employee_id AS employee2_id, second employee's first_name & last_name combined as as employee2_name and manager_id. Use CONCAT(e1.first_name, ' ', e1.last_name) to get the full name.
+  Retrieve pairs of employees who share the same manager. Display first employee_id AS employee1_id, first employee's first_name & last_name combined as employee1_name, second employee_id AS employee2_id, second employee's first_name & last_name combined as as employee2_name and manager_id. Use CONCAT(e1.first_name, ' ', e1.last_name) to get the full name.
 
-Table: employees
-ColumnNames		DataType		
-employee_id		int		
-first_name		varchar
-last_name		varchar  
-department		varchar 
-salary			decimal
-manager_id		int
+  Table: employees
+  ColumnNames		DataType		
+  employee_id		int		
+  first_name		varchar
+  last_name		varchar  
+  department		varchar 
+  salary			decimal
+  manager_id		int
 
 
-Sample Input:
-employees
-| employee_id | first_name | last_name | department | salary | manager_id |
-|-------------|------------|-----------|------------|--------|------------|
-| 1           | John       | Doe       | Sales      | 60000  | 3          |
-| 2           | Jane       | Smith     | Marketing  | 55000  | 4          |
-| 3           | Mike       | Johnson   | IT         | 70000  | 5          |
-| 4           | Emily      | Davis     | Finance    | 80000  | 6          |
-| 5           | Chris      | Evans     | Sales      | 65000  | 3          |
-| 6           | Emma       | Wilson    | Marketing  | 60000  | 4          |
-| 7           | David      | Lee       | IT         | 75000  | 5          |
+  Sample Input:
+  employees
+  | employee_id | first_name | last_name | department | salary | manager_id |
+  |-------------|------------|-----------|------------|--------|------------|
+  | 1           | John       | Doe       | Sales      | 60000  | 3          |
+  | 2           | Jane       | Smith     | Marketing  | 55000  | 4          |
+  | 3           | Mike       | Johnson   | IT         | 70000  | 5          |
+  | 4           | Emily      | Davis     | Finance    | 80000  | 6          |
+  | 5           | Chris      | Evans     | Sales      | 65000  | 3          |
+  | 6           | Emma       | Wilson    | Marketing  | 60000  | 4          |
+  | 7           | David      | Lee       | IT         | 75000  | 5          |
 */
 
 SELECT
@@ -893,5 +893,153 @@ WHERE e1.manager_id IS NOT NULL; -- Solution
 
 
 /*
-Question 20: UNION
+  Question 20: UNION
+
+  Create a consolidated list of transactions from both the Orders and Invoices tables. Your result must contain customer_id, order_date as 'transaction_date' named column and the order_amount & total_amount from both tables as 'transaction_amount' named column.
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
+
+  Table: invoices
+  ColumnName      DataType
+  invoice_id      int
+  customer_id     int
+  invoice_date    date
+  total_amount    decimal
 */
+
+SELECT
+  customer_id,
+  order_date AS transaction_date,
+  order_amount AS transaction_amount,
+FROM orders
+UNION
+SELECT
+  customer_id,
+  invoice_date AS transaction_date,
+  total_amount AS transaction_amount,
+FROM invoices; -- Correct!
+
+
+/*
+  Question 21: CURDATE & CURTIME
+
+  Retrieve all orders and display the following (after displaying current dates and times delete them from select to get the question passed marker):
+  order_id
+  order_status
+  order_amount
+  customer_id
+  customer_name
+  The current date as ReportDate
+  The current time as ReportTime
+  The current date and time as ReportGeneratedAt
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
+
+  Table: customers
+  ColumnName          Datatype           
+  customer_id         int 
+  customer_name       varchar
+  age                 int 
+  city                varchar
+  email               varchar
+  address           varchar
+*/
+
+SELECT
+  o.order_id,
+  o.order_status,
+  o.order_amount,
+  c.customer_id,
+  c.customer_name,
+  CURDATE() AS ReportDate,
+  CURTIME() AS ReportTime, -- UTC
+  NOW() AS ReportGeneratedAt -- UTC
+FROM orders AS o JOIN customers AS c
+ON o.customer_id = c.customer_id; -- Correct!
+
+
+/*
+  Question 22: DATE ARITHMETIC FUNCTIONS
+
+  Retrieve all orders displaying order_id, order_status, order_amount, and the original order_date. Additionally, calculate and display:
+  The expected delivery date by adding 7 days to the order_date using DATE_ADD.
+  The last cancellation date by subtracting 3 days from the order_date using DATE_SUB.
+  Also include the customer_id and customer_name for each order.
+
+  Table: customers
+  ColumnName          Datatype           
+  customer_id         int 
+  customer_name       varchar
+  age                 int 
+  city                varchar
+  email               varchar
+  address           varchar
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
+*/
+
+SELECT
+  o.order_id,
+  o.order_status,
+  o.order_amount,
+  o.order_date,
+  DATE_ADD(DATE(order_date), INTERVAL 7 DAY) AS expected_delivery_date,
+  DATE_SUB(DATE(order_date), INTERVAL 3 DAY) AS last_cancellation_date,
+  c.customer_id,
+  c.customer_name
+FROM customers AS c JOIN orders AS o
+ON c.customer_id = o.customer_id; -- Correct!
+
+
+/*
+  Question 23: DATE FORMAT
+
+  Write a query to display each customer’s name, their order date in the format DD/MM/YYYY, and the weekday name of the order.
+
+  Table: customers
+  ColumnName          Datatype           
+  customer_id         int 
+  customer_name       varchar
+  age                 int 
+  city                varchar
+  email               varchar
+  address           varchar
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
+*/
+
+SELECT
+  c.customer_name,
+  DATE_FORMAT(o.order_date, '%d/%m/%Y') AS formatted_date,
+  DAYNAME(o.order_date) AS weekday
+FROM customers AS c JOIN orders AS o
+ON c.customer_id = o.customer_id; -- Correct!
+-- You could also use 'DATE_FORMAT(o.order_date, '%W') AS weekday' to get the weekday instead of using DAYNAME.

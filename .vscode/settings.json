@@ -1,6 +1,11 @@
 {
   "cSpell.words": [
+    "CURDATE",
+    "CURTIME",
+    "DATEADD",
+    "DATEDIFF",
     "Equi",
+    "GETDATE",
     "IFNULL"
   ]
 }

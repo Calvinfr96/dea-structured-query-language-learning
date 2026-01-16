@@ -835,3 +835,184 @@
 
 ### Combining Self JOIN With Other Clauses
 - `SELF JOIN` can be combined with other clauses, such as `GROUP BY`, `HAVING`, `ORDER BY`, and `WHERE` to perform more comprehensive analysis on hierarchical data.
+
+## UNION
+- The SQL `UNION` Operator is a powerful tool that allows you to combine corresponding **rows** from multiple `SELECT` queries into a single result set. This particularly useful for collecting data from multiple tables and presenting it as a unified output.
+- The `UNION` Operator allows you to merge datasets with the same number of columns and compatible data type, providing valuable insights for data analysis and reporting.
+  - **`UNION` can only be used when the `SELECT` Statements have the same number of columns _and_ compatible data types.** If data types differ, consider using type conversion functions to ensure compatibility
+- The `UNION` Operator is applicable when:
+  - Retrieving data from multiple tables that have similar structures.
+  - Consolidating info from different conditions into a single result set.
+  - Displaying aggregated data from multiple sources.
+- The basic syntax of the `UNION` Operator is as follows:
+  ```
+  SELECT column1, column2, ... FROM table1 WHERE condition UNION SELECT column1, column2, ... FROM table2 WHERE condition;
+  ```
+- The `UNION` Operator will combine data two or more sets _while also removing duplicate rows_ by default.
+  - Duplicates are those rows where _every single column value_ is identical.
+  - `UNION ALL` can be used in use cases where duplicate rows need to be included.
+- Since the `UNION` Operator does not guarantee any specific ordering of combined rows, use `ORDER BY` after `UNION` to ensure specific ordering is applied.
+
+### Best Practices
+- Ensure that the `SELECT` queries in a `UNION` have the same number of columns and compatible data types.
+- Use `UNION ALL` when you need to include all rows from both data sets.
+- Consider using column aliases to provide meaningful names in the final result set.
+- Use `ORDER BY` after `UNION` to apply specific ordering where necessary.
+
+### Practice Examples
+- Example 1 - **Consolidating Data from Multiple Conditions:** We have two tables, "orders" and "invoices," with similar structures, and we want to consolidate the order IDs and amounts from both tables for a specific customer.
+  ```
+  SELECT order_id, amount FROM orders WHERE customer_id = 101 UNION SELECT invoice_id AS order_id, total_amount AS amount FROM invoices WHERE customer_id = 101;
+  ```
+  - This query returns order IDs and amounts for orders where the customer ID is 101. Data is collected and merged from the orders table and invoices table.
+- Example 2 - **Adding Duplicates with UNION ALL:** By default, SQL UNION removes duplicate rows from the result set. If you want to include duplicate rows, use the UNION ALL operator.
+  ```
+  SELECT order_id, amount FROM orders UNION ALL SELECT invoice_id AS order_id, total_amount AS amount FROM invoices
+  ```
+  - This query returns all order IDs and amounts from both the orders and invoices table.
+
+## CURDATE & CURTIME
+- Date and Time Functions in SQL allow you to work with dates, times, and timestamps within a database. They are particularly useful for tasks such as filtering data based on a specific time period, calculating time intervals, or formatting date outputs for reports. They help you analyze trends, track activity, and create time-based summaries.
+- The most widely used Date and Time functions in SQL are those that are used to retrieve the current date, current time, and current date and time. These are particularly useful for logging events, running reports.
+- The basic syntax varies based on the type of SQL you're using, but the overall concept remains the same. The functions are called without arguments to retrieve the current date/time.
+  ```
+  SELECT CURRENT_DATE;     -- Current date
+  SELECT CURRENT_TIME;     -- Current time
+  SELECT CURRENT_TIMESTAMP;-- Current date and time
+  ```
+### Getting Current Date
+- MySQL:
+  ```
+  SELECT CURDATE() AS current_date; -- This returns the current date (e.g., 2025-08-09).
+  ```
+- PostgreSQL:
+  ```
+  SELECT CURRENT_DATE AS current_date;
+  ```
+- SQL Server:
+  ```
+  SELECT CAST(GETDATE() AS DATE) AS current_date;
+  ```
+
+### Getting Current Time
+- MySQL:
+  ```
+  SELECT CURTIME() AS current_time; -- This returns the current time in HH:MM:SS format from the UTC timezone as default.
+  ```
+- PostgreSQL:
+  ```
+  SELECT CURRENT_TIME AS current_time;
+  ```
+- SQL Server:
+  ```
+  SELECT CAST(GETDATE() AS TIME) AS current_time;
+  ```
+
+### Getting Both Date and Time
+- MySQL:
+  ```
+  SELECT NOW() AS current_datetime; -- Uses UTC timezone by default.
+  ```
+- PostgreSQL:
+  ```
+  SELECT CURRENT_TIMESTAMP AS current_datetime;
+  ```
+- SQL Server:
+  ```
+  SELECT GETDATE() AS current_datetime;
+  ```
+
+### Practice Example
+- Imagine you have a logins table and want to find all users who logged in today:
+  ```
+  SELECT user_id, login_time
+  FROM logins
+  WHERE DATE(login_time) = CURDATE();
+  ```
+  - Here, the `DATE` Function converts the login_time into a date.
+
+## DATE ARITHMETIC FUNCTIONS
+- SQL Date Arithmetic Functions allow you to perform calculations on datetime values. They are essential for tasks such as finding the difference between two dates/timestamps, adding or subtracting days, months, or years, and manipulating timestamps to analyze time intervals.
+
+### Basic Syntax and Functions
+- `DATEDIFF` - Calculate the difference between two dates:
+  - MySQL:
+    ```
+    SELECT DATEDIFF('2025-08-15', '2025-08-09') AS days_diff; -- Returns 6 (Because each date is assumed to be at midnight).
+    ```
+  - SQL Server:
+    ```
+    SELECT DATEDIFF(day, '2025-08-09', '2025-08-15') AS days_diff; -- Returns 6.
+    ```
+  - PostgreSQL:
+    ```
+    SELECT '2025-08-15'::date - '2025-08-09'::date AS days_diff; -- Returns 6.
+    ```
+
+- `DATE_ADD()` / `DATEADD()` – Add interval (days, months, years, or other intervals) to a date:
+  - MySQL:
+    ```
+    SELECT DATE_ADD('2025-08-09', INTERVAL 10 DAY) AS new_date; -- Returns 2025-08-19.
+    ```
+  - SQL Server:
+    ```
+    SELECT DATEADD(day, 10, '2025-08-09') AS new_date; -- Returns 2025-08-19.
+    ```
+  - PostgreSQL:
+    ```
+    SELECT '2025-08-09'::date + INTERVAL '10 days' AS new_date; -- Returns 2025-08-19.
+    ```
+- `DATE_SUB()` / `DATEADD()` with negative values – Subtract interval from a date:
+- MySQL:
+```
+SELECT DATE_SUB('2025-08-09', INTERVAL 5 DAY) AS new_date; -- Returns 2025-08-04.
+```
+- SQL Server:
+```
+SELECT DATEADD(day, -5, '2025-08-09') AS new_date; -- Returns 2025-08-04.
+```
+- PostgreSQL:
+```
+SELECT '2025-08-09'::date - INTERVAL '5 days' AS new_date; -- Returns 2025-08-04.
+```
+
+## DATE FORMAT
+- The SQL `DATE_FORMAT` Function allows you to display date and time values in a human-readable manner. Instead of showing dates in the default `YYYY-MM-DD` format, you can format them to match reporting needs, cultural preferences, or business requirements.
+- The function is particularly useful when:
+  - You want to display a date in the `day/month/year` format.
+  - You need to show weekday names, such as Monday or Tuesday.
+  - You want to extract parts of a date.
+- The basic syntax of the `DATE_FORMAT` Function is as follows:
+  ```
+  DATE_FORMAT(date, format)
+  ```
+  - date is the date or timestamp value you want to format.
+  - format is the string containing specifiers for how the date should be displayed.
+- Common Format Specifiers:
+  ```
+  | Specifier | Meaning                  | Example Output |
+  | --------- | ------------------------ | -------------- |
+  | `%Y`      | 4-digit year             | 2025           |
+  | `%y`      | 2-digit year             | 25             |
+  | `%M`      | Full month name          | August         |
+  | `%m`      | Month number (01–12)     | 08             |
+  | `%d`      | Day of month (01–31)     | 11             |
+  | `%b`      | Abbreviated month name   | Aug            |
+  | `%W`      | Full weekday name        | Monday         |
+  | `%a`      | Abbreviated weekday name | Mon            |
+  | `%H`      | Hour (00–23)             | 14             |
+  | `%h`      | Hour (01–12)             | 02             |
+  | `%i`      | Minutes                  | 05             |
+  | `%s`      | Seconds                  | 09             |
+  | `%p`      | AM/PM                    | PM             |
+  ```
+- Example:
+  ```
+  SELECT
+      order_id,
+      order_date,
+      DATE_FORMAT(order_date, '%M %d, %Y') AS formatted_date,
+      DATE_FORMAT(order_date, '%W at %h:%i %p') AS friendly_time
+  FROM orders;
+  ```
+  - Selects the order ID and order date, then formats the order date as both 'Month, dd, yyyy' and 'Weekday at hh:mm AM/PM'.
