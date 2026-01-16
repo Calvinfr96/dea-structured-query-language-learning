@@ -873,7 +873,11 @@
 
 ## CURDATE & CURTIME
 - Date and Time Functions in SQL allow you to work with dates, times, and timestamps within a database. They are particularly useful for tasks such as filtering data based on a specific time period, calculating time intervals, or formatting date outputs for reports. They help you analyze trends, track activity, and create time-based summaries.
+<<<<<<< HEAD
 - The most widely used Date and Time functions in SQL are those that are used to retrieve the current date, current time, and current date and time. These are particularly useful for logging events, running reports.
+=======
+- The most widely used Date and Time functions in SQL are those that are used to retrieve the current date, current time, and current date and time. These are particularly useful for logging events and running reports.
+>>>>>>> a1a5e8c (Finish intermediate lessons)
 - The basic syntax varies based on the type of SQL you're using, but the overall concept remains the same. The functions are called without arguments to retrieve the current date/time.
   ```
   SELECT CURRENT_DATE;     -- Current date
@@ -1015,4 +1019,8 @@ SELECT '2025-08-09'::date - INTERVAL '5 days' AS new_date; -- Returns 2025-08-04
       DATE_FORMAT(order_date, '%W at %h:%i %p') AS friendly_time
   FROM orders;
   ```
+<<<<<<< HEAD
   - Selects the order ID and order date, then formats the order date as both 'Month, dd, yyyy' and 'Weekday at hh:mm AM/PM'.
+=======
+  - Selects the order ID and order date, then formats the order date as both 'Month dd, yyyy' and 'Weekday at hh:mm AM/PM'.
+>>>>>>> a1a5e8c (Finish intermediate lessons)
