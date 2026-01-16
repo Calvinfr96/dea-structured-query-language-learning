@@ -247,6 +247,7 @@ FROM employees
 GROUP BY department
 ORDER BY TotalSalary DESC; -- Correct!
 
+
 /*
   Question 7: AVG OPERATOR
 
@@ -281,6 +282,7 @@ FROM orders
 GROUP BY order_year
 ORDER BY order_year ASC; -- Correct!
 -- "for each" was the key phrase indicating the need for GROUP BY
+
 
 /*
   Question 8: HAVING CLAUSE
@@ -385,7 +387,511 @@ WHERE customer_id IN (
 -- Without a HAVING clause in the first subquery, it would simply return a list of unique customer IDs.
 
 
+/*
+  Question 10: CASE STATEMENT
+
+  Retrieve the product_name, unit_price and a column named "PriceCategory" that categorizes products into three groups: "Low", "Medium", and "High" based on their price ranges. Use the following criteria:
+  1. "Low" for products with price less than 200.
+  2. "Medium" for products with price between 200 and 500.
+  3. "High" for products with price greater than 500.
+
+  Table: products 
+  ColumnName          DataType
+  product_id          int
+  product_name        varchar 
+  category            varchar
+  unit_price          decimal
+
+
+  Sample Input:
+  products
+  | product_id | product_name | category    | unit_price |
+  |------------|--------------|-------------|------------|
+  | 1          | Laptop       | Electronics | 800.00     |
+  | 2          | Smartphone   | Electronics | 300.00     |
+  | 3          | Headphones   | Electronics | 120.00     |
+  | 4          | Microwave    | Appliances  | 250.00     |
+  | 5          | Refrigerator | Appliances  | 600.00     |
+  | 6          | Blender      | Appliances  | 50.00      |
+  | 7          | Desk Chair   | Furniture   | 180.00     |
+*/
+
+SELECT
+  product_name,
+  unit_price,
+  (
+    CASE
+      WHEN unit_price < 200 THEN "Low"
+      WHEN unit_price BETWEEN 200 AND 500 THEN "Medium"
+      ELSE "High"
+    END
+  ) AS PriceCategory
+FROM products; -- Correct!
+-- The CASE Statement here categorizes the product in each row based on unit price.
+
 
 /*
-Question 10: CASE STATEMENT
+  Question 11: LEFT JOIN
+
+  Retrieve a list of customer_id and customer_name along with the total number of orders as "order_count" they have placed and the total amount as "total_amount" they have spent.
+
+  Table: customers
+  ColumnName          Datatype           
+  customer_id         int 
+  customer_name       varchar
+  age                 int 
+  city                varchar
+  email               varchar
+  address           varchar
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
+
+
+  Sample Input:
+  customers
+  | customer_id | customer_name  | age | city | email               | address               |
+  |-------------|----------------|-----|------|---------------------|-----------------------|
+  | 1           | John Doe       | 30  | NY   | john.doe@email.com. | 123 Main Street       |
+  | 2           | Jane Smith     | 25  | LA   | jane.smith@email.com| 456 Oak Avenue        |
+  | 3           | Mike Johnson   | 35  | SF   | mike.j@email.com    | 789 Pine Boulevard    |
+  | 4           | Emily Davis    | 28  | CHI  | emily.d@email.com   | 101 Elm Street        |
+
+  orders
+  | order_id | order_date | order_amount  | customer_id | order_status | shipping_address      |
+  |----------|------------|---------------|-------------|--------------|-----------------------|
+  | 101      | 2023-01-15 | 120.00        | 1           | Completed    | 123 Main Street       |
+  | 102      | 2023-02-20 | 250.00        | 1           | Shipped      | 123 Main Street       |
+  | 103      | 2023-03-10 | 180.00        | 2           | Completed    | 456 Oak Avenue        |
+  | 104      | 2023-04-05 | 300.00        | 3           | Completed    | 789 Pine Boulevard    |
+  | 105      | 2023-05-12 | 150.00        | 2           | Shipped      | 456 Oak Avenue        |
+  | 106      | 2023-06-08 | 200.00        | 4           | Completed    | 101 Elm Street        |
+*/
+
+-- Unable to come up with solution =(
+
+SELECT
+ c.customer_id,
+ c.customer_name,
+ COUNT(o.order_id) AS order_count,
+ SUM(order_amount) AS total_amount
+FROM
+  customers AS c LEFT JOIN orders AS o
+  ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.customer_name; -- Solution
+-- "order_count" indicates we need to count the number of valid rows per customer in the orders table. "total_amount" indicates we need to sum order amount per customer.
+-- Since this question is related to LEFT JOIN, it should have explicitly stated to include customers that haven't placed any orders.
+-- Instead of using 'ON c.customer_id = o.customer_id', you could also use 'USING(customer_id)'.
+-- We group by customer ID and customer name because it is best practice to GROUP BY all non-aggregated columns added to the SELECT Statement.
+-- The solution joins customers, then orders, because you're much less likely to find orders without customers than you are customers without orders.
+
+
+/*
+  Question 12: RIGHT JOIN
+
+  Exercise: Retrieve a list of orders with their order_id, order_date, order_amount  and the corresponding customer information (customer_name and email). Also include customers who have not made any orders.
+
+  Table: customers
+  ColumnName          Datatype           
+  customer_id         int 
+  customer_name       varchar
+  age                 int 
+  city                varchar
+  email               varchar
+  address           varchar
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
+
+
+  Sample Input:
+  customers
+  | customer_id | customer_name  | age | city | email               | address               |
+  |-------------|----------------|-----|------|---------------------|-----------------------|
+  | 1           | John Doe       | 30  | NY   | john.doe@email.com  | 123 Main Street       |
+  | 2           | Jane Smith     | 25  | LA   | jane.smith@email.com| 456 Oak Avenue        |
+  | 3           | Mike Johnson   | 35  | SF   | mike.j@email.com    | 789 Pine Boulevard    |
+
+  orders
+  | order_id | order_date | order_amount  | customer_id | order_status | shipping_address      |
+  |----------|------------|---------------|-------------|--------------|-----------------------|
+  | 101      | 2023-01-15 | 120.00        | 1           | Completed    | 123 Main Street       |
+  | 102      | 2023-02-20 | 250.00        | 1           | Shipped      | 123 Main Street       |
+  | 103      | 2023-03-10 | 180.00        | 2           | Completed    | 456 Oak Avenue        |
+  | 104      | 2023-04-05 | 300.00        | 3           | Completed    | 789 Pine Boulevard    |
+  | 105      | 2023-05-12 | 150.00        | 2           | Shipped      | 456 Oak Avenue        |
+  | 106      | 2023-06-08 | 200.00        | 1           | Completed    | 123 Main Street       |
+*/
+
+SELECT
+  o.order_id,
+  o.order_date,
+  o.order_amount,
+  c.customer_name,
+  c.email
+FROM orders AS o RIGHT JOIN customers AS c
+ON o.customer_id = c.customer_id; -- Correct!
+-- Specifying to include customers who have not made any orders was a signal to use RIGHT JOIN with customers as the second table.
+
+
+/*
+  Question 13: INNER JOIN
+
+  Exercise: Retrieve a list of customer_id, customer_name who have placed orders along with information about their orders, including the order_id, order_date and order_amount.
+
+  Table: customers
+  ColumnName          Datatype           
+  customer_id         int 
+  customer_name       varchar
+  age                 int 
+  city                varchar
+  email               varchar
+  address             varchar
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
+
+
+  Sample Input:
+  customers
+  | customer_id | customer_name  | age | city | email               | address               |
+  |-------------|----------------|-----|------|---------------------|-----------------------|
+  | 1           | John Doe       | 30  | NY   | john.doe@email.com. | 123 Main Street       |
+  | 2           | Jane Smith     | 25  | LA   | jane.smith@email.com| 456 Oak Avenue        |
+  | 3           | Mike Johnson   | 35  | SF   | mike.j@email.com    | 789 Pine Boulevard    |
+  | 4           | Emily Davis    | 28  | CHI  | emily.d@email.com   | 101 Elm Street        |
+
+  orders
+  | order_id | order_date | order_amount  | customer_id | order_status | shipping_address      |
+  |----------|------------|---------------|-------------|--------------|-----------------------|
+  | 101      | 2023-01-15 | 120.00        | 1           | Completed    | 123 Main Street       |
+  | 102      | 2023-02-20 | 250.00        | 1           | Shipped      | 123 Main Street       |
+  | 103      | 2023-03-10 | 180.00        | 2           | Completed    | 456 Oak Avenue        |
+  | 104      | 2023-04-05 | 300.00        | 3           | Completed    | 789 Pine Boulevard    |
+  | 105      | 2023-05-12 | 150.00        | 2           | Shipped      | 456 Oak Avenue        |
+  | 106      | 2023-06-08 | 200.00        | 4           | Completed    | 101 Elm Street        |
+*/
+
+SELECT
+  c.customer_id,
+  c.customer_name,
+  o.order_id,
+  o.order_date,
+  o.order_amount
+FROM customers AS c INNER JOIN orders AS o
+ON c.customer_id = o.customer_id; -- Correct!
+
+
+/*
+  Question 14: FULL OUTER JOIN OR OUTER JOIN
+
+  Retrieve a list of customer_id, customer_name and their corresponding order_id, order_date and order_amount for customers who have placed an order. For other customers order details can be null as they haven't placed an order.
+
+  Table: customers
+  ColumnName          Datatype           
+  customer_id         int 
+  customer_name       varchar
+  age                 int 
+  city                varchar
+  email               varchar
+  address           varchar
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+
+
+  Sample Input:
+  customers
+  | customer_id | customer_name  | age | city | email               | address               |
+  |-------------|----------------|-----|------|---------------------|-----------------------|
+  | 1           | John Doe       | 30  | NY   | john.doe@email.com. | 123 Main Street       |
+  | 2           | Jane Smith     | 25  | LA   | jane.smith@email.com| 456 Oak Avenue        |
+  | 3           | Mike Johnson   | 35  | SF   | mike.j@email.com    | 789 Pine Boulevard    |
+  | 4           | Emily Davis    | 28  | CHI  | emily.d@email.com   | 101 Elm Street        |
+
+  orders
+  | order_id | order_date | order_amount  | customer_id | order_status | shipping_address      |
+  |----------|------------|---------------|-------------|--------------|-----------------------|
+  | 101      | 2023-01-15 | 120.00        | 1           | Completed    | 123 Main Street       |
+  | 102      | 2023-02-20 | 250.00        | 1           | Shipped      | 123 Main Street       |
+  | 103      | 2023-03-10 | 180.00        | 2           | Completed    | 456 Oak Avenue        |
+  | 104      | 2023-04-05 | 300.00        | 3           | Completed    | 789 Pine Boulevard    |
+  | 105      | 2023-05-12 | 150.00        | 2           | Shipped      | 456 Oak Avenue        |
+  | 106      | 2023-06-08 | 200.00        | 1           | Completed    | 123 Main Street       |
+*/
+
+SELECT
+  c.customer_id,
+  c.customer_name,
+  o.order_id,
+  o.order_date,
+  o.order_amount
+FROM customers AS c LEFT JOIN orders AS o
+ON c.customer_id = o.customer_id; -- Correct!
+-- We need to use LEFT JOIN here instead of FULL OUTER JOIN because the version of MySQL used by the DEA website does not support this function.
+
+
+/*
+  Question 15: JOIN WITH WHERE
+
+  Retrieve a list of customer_id and customer_name and their corresponding order_id, order_date and order_amount, but only for orders placed between '2023-01-01' and '2023-06-30'.
+
+  Table: customers
+  ColumnName          Datatype           
+  customer_id         int 
+  customer_name       varchar
+  age                 int 
+  city                varchar
+  email               varchar
+  address           varchar
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+
+
+  Sample Input:
+  customers
+  | customer_id | customer_name  | age | city | email               | address               |
+  |-------------|----------------|-----|------|---------------------|-----------------------|
+  | 1           | John Doe       | 30  | NY   | john.doe@email.com. | 123 Main Street       |
+  | 2           | Jane Smith     | 25  | LA   | jane.smith@email.com| 456 Oak Avenue        |
+  | 3           | Mike Johnson   | 35  | SF   | mike.j@email.com    | 789 Pine Boulevard    |
+
+  orders
+  | order_id | order_date | order_amount  | customer_id | order_status | shipping_address      |
+  |----------|------------|---------------|-------------|--------------|-----------------------|
+  | 101      | 2023-01-15 | 120.00        | 1           | Completed    | 123 Main Street       |
+  | 102      | 2023-02-20 | 250.00        | 1           | Shipped      | 123 Main Street       |
+  | 103      | 2023-03-10 | 180.00        | 2           | Completed    | 456 Oak Avenue        |
+  | 104      | 2023-04-05 | 300.00        | 3           | Completed    | 789 Pine Boulevard    |
+  | 105      | 2023-05-12 | 150.00        | 2           | Shipped      | 456 Oak Avenue        |
+  | 106      | 2023-06-08 | 200.00        | 1           | Completed    | 123 Main Street       |
+| 107      | 2023-07-15 | 220.00        | 2           | Shipped      | 456 Oak Avenue        |
+*/
+
+SELECT
+  c.customer_id,
+  c.customer_name,
+  o.order_id,
+  o.order_date,
+  o.order_amount
+FROM customers AS c INNER JOIN orders AS o
+ON c.customer_id = o.customer_id
+WHERE o.order_date BETWEEN '2023-01-01' AND '2023-06-30'; -- Correct!
+-- Although this is the correct answer, remember to use caution when using BETWEEN with date literals.
+
+
+/*
+  Question 16: JOIN WITH COMPARISON OPERATOR
+
+  Retrieve a list of customer_id and customer_name and their corresponding order_id, order_date and order_amount, but only for orders with a total amount at least 500.
+
+  Table: customers
+  ColumnName          Datatype           
+  customer_id         int 
+  customer_name       varchar
+  age                 int 
+  city                varchar
+  email               varchar
+  address           varchar
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
+
+
+  Sample Input:
+  customers
+  | customer_id | customer_name  | age | city | email               | address               |
+  |-------------|----------------|-----|------|---------------------|-----------------------|
+  | 1           | John Doe       | 30  | NY   | john.doe@email.com  | 123 Main Street       |
+  | 2           | Jane Smith     | 25  | LA   | jane.smith@email.com| 456 Oak Avenue        |
+  | 3           | Mike Johnson   | 35  | SF   | mike.j@email.com    | 789 Pine Boulevard    |
+
+  orders
+  | order_id | order_date | order_amount  | customer_id | order_status | shipping_address      |
+  |----------|------------|---------------|-------------|--------------|-----------------------|
+  | 101      | 2023-01-15 | 120.00        | 1           | Completed    | 123 Main Street       |
+  | 102      | 2023-02-20 | 150.00        | 1           | Shipped      | 123 Main Street       |
+  | 103      | 2023-03-10 | 180.00        | 2           | Completed    | 456 Oak Avenue        |
+  | 104      | 2023-04-05 | 600.00        | 3           | Completed    | 789 Pine Boulevard    |
+  | 105      | 2023-05-12 | 520.00        | 2           | Shipped      | 456 Oak Avenue        |
+  | 106      | 2023-06-08 | 200.00        | 1           | Completed    | 123 Main Street       |
+  | 107      | 2023-07-15 | 800.00        | 2           | Shipped      | 456 Oak Avenue        |
+*/
+
+SELECT
+  c.customer_id,
+  c.customer_name,
+  o.order_id,
+  o.order_date,
+  o.order_amount
+FROM customers AS c JOIN orders AS o
+ON c.customer_id = o.customer_id AND o.order_amount >= 500; -- Correct!
+
+
+/*
+  Question 17: DISTINCT
+
+  Retrieve all unique departments. Display department.
+
+  Table: employees
+  
+  ColumnNames		DataType		
+  employee_id		int		
+  first_name		varchar
+  last_name		varchar  
+  department		varchar 
+  salary			decimal
+  manager_id		int
+
+
+  Sample Input:
+  employees
+  | employee_id | first_name | last_name | department | salary | manager_id |
+  |-------------|------------|-----------|------------|--------|------------|
+  | 1           | John       | Doe       | Sales      | 60000  | 3          |
+  | 2           | Jane       | Smith     | Marketing  | 55000  | 4          |
+  | 3           | Mike       | Johnson   | IT         | 70000  | 5          |
+  | 4           | Emily      | Davis     | Finance    | 80000  | 6          |
+  | 5           | Chris      | Evans     | Sales      | 65000  | 3          |
+  | 6           | Emma       | Wilson    | Marketing  | 60000  | 4          |
+  | 7           | David      | Lee       | IT         | 75000  | 5          |
+*/
+
+SELECT
+  DISTINCT department AS department
+FROM employees; -- Correct!
+-- The alias isn't necessarily required, but it doesn't hurt to add it.
+
+
+/*
+  Question 18: JOIN WITH MULTIPLE KEYS
+
+  Retrieve customer_id, customer_name and address along with their order_id, order_date, order_amount, order_status and shipping_address of customers whose address and shipping address match.
+
+  Table: customers
+  ColumnName          Datatype           
+  customer_id         int 
+  customer_name       varchar
+  age                 int 
+  city                varchar
+  email               varchar
+  address             varchar
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
+*/
+
+SELECT
+  c.customer_id,
+  c.customer_name,
+  c.address,
+  o.order_id,
+  o.order_date,
+  o.order_amount,
+  o.order_status,
+  o.shipping_address
+FROM customers AS c JOIN orders AS o
+ON c.customer_id = o.customer_id
+AND c.address = o.shipping_address; -- Correct!
+
+
+/*
+Question 19: SELF JOIN
+
+Retrieve pairs of employees who share the same manager. Display first employee_id AS employee1_id, first employee's first_name & last_name combined as employee1_name, second employee_id AS employee2_id, second employee's first_name & last_name combined as as employee2_name and manager_id. Use CONCAT(e1.first_name, ' ', e1.last_name) to get the full name.
+
+Table: employees
+ColumnNames		DataType		
+employee_id		int		
+first_name		varchar
+last_name		varchar  
+department		varchar 
+salary			decimal
+manager_id		int
+
+
+Sample Input:
+employees
+| employee_id | first_name | last_name | department | salary | manager_id |
+|-------------|------------|-----------|------------|--------|------------|
+| 1           | John       | Doe       | Sales      | 60000  | 3          |
+| 2           | Jane       | Smith     | Marketing  | 55000  | 4          |
+| 3           | Mike       | Johnson   | IT         | 70000  | 5          |
+| 4           | Emily      | Davis     | Finance    | 80000  | 6          |
+| 5           | Chris      | Evans     | Sales      | 65000  | 3          |
+| 6           | Emma       | Wilson    | Marketing  | 60000  | 4          |
+| 7           | David      | Lee       | IT         | 75000  | 5          |
+*/
+
+SELECT
+  e1.employee_id AS employee_id,
+  CONCAT(e1.first_name, ' ', e1.last_name) AS employee1_name,
+  e2.employee_id AS employee2_id,
+  CONCAT(e2.first_name, ' ', e2.last_name) AS employee2_name,
+  e1.manager_id AS manager_id
+FROM employees AS e1 JOIN employees AS e2
+ON e1.manager_id = e2.manager_id
+AND e1.employee_id <> e2.employee_id; -- Incorrect
+
+SELECT
+  e1.employee_id AS employee_id,
+  CONCAT(e1.first_name, ' ', e1.last_name) AS employee1_name,
+  e2.employee_id AS employee2_id,
+  CONCAT(e2.first_name, ' ', e2.last_name) AS employee2_name,
+  e1.manager_id AS manager_id
+FROM employees AS e1 JOIN employees AS e2
+ON e1.manager_id = e2.manager_id
+AND e1.employee_id < e2.employee_id
+WHERE e1.manager_id IS NOT NULL; -- Solution
+-- We need a self join here because a manager is an employee (the hierarchy). The manager_id column refers to a value from the employee_id column.
+-- 'AND e1.employee_id < e2.employee_id' is required to avoid redundant pairs (i.e paring employee 101 and 103, then pairing employee 103 and 101)
+  -- We use < (you can also use >) instead of != because != doesn't actually avoid redundant pairs. Two employees would never share the same ID because it's a primary key.
+  -- Using < limits the scope of the comparison that the join performs. When comparing a row in table A to the rows in table B, it won't look at all of the rows.
+  -- This results in pairs where e1.employee_id is ALWAYS less than e2.employee_id
+-- 'WHERE e1.manager_id IS NOT NULL' is required to exclude employees who don't have managers.
+
+
+/*
+Question 20: UNION
 */
