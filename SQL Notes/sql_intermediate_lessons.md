@@ -838,7 +838,7 @@
 
 ## UNION
 - The SQL `UNION` Operator is a powerful tool that allows you to combine corresponding **rows** from multiple `SELECT` queries into a single result set. This particularly useful for collecting data from multiple tables and presenting it as a unified output.
-- The `UNION` Operator allows you to merge datasets with the same number of columns and compatible data type, providing valuable insights for data analysis and reporting.
+- The `UNION` Operator allows you to merge datasets with the same number of columns and compatible data types, providing valuable insights for data analysis and reporting.
   - **`UNION` can only be used when the `SELECT` Statements have the same number of columns _and_ compatible data types.** If data types differ, consider using type conversion functions to ensure compatibility
 - The `UNION` Operator is applicable when:
   - Retrieving data from multiple tables that have similar structures.
@@ -848,7 +848,7 @@
   ```
   SELECT column1, column2, ... FROM table1 WHERE condition UNION SELECT column1, column2, ... FROM table2 WHERE condition;
   ```
-- The `UNION` Operator will combine data two or more sets _while also removing duplicate rows_ by default.
+- The `UNION` Operator will combine data from two or more sets _while also removing duplicate rows_ by default.
   - Duplicates are those rows where _every single column value_ is identical.
   - `UNION ALL` can be used in use cases where duplicate rows need to be included.
 - Since the `UNION` Operator does not guarantee any specific ordering of combined rows, use `ORDER BY` after `UNION` to ensure specific ordering is applied.
@@ -873,7 +873,7 @@
 
 ## CURDATE & CURTIME
 - Date and Time Functions in SQL allow you to work with dates, times, and timestamps within a database. They are particularly useful for tasks such as filtering data based on a specific time period, calculating time intervals, or formatting date outputs for reports. They help you analyze trends, track activity, and create time-based summaries.
-- The most widely used Date and Time functions in SQL are those that are used to retrieve the current date, current time, and current date and time. These are particularly useful for logging events and running reports.
+- The most widely used Date and Time Functions in SQL are those that are used to retrieve the current date, current time, and current date and time. These are particularly useful for logging events and running reports.
 - The basic syntax varies based on the type of SQL you're using, but the overall concept remains the same. The functions are called without arguments to retrieve the current date/time.
   ```
   SELECT CURRENT_DATE;     -- Current date
@@ -897,7 +897,7 @@
 ### Getting Current Time
 - MySQL:
   ```
-  SELECT CURTIME() AS current_time; -- This returns the current time in HH:MM:SS format from the UTC timezone as default.
+  SELECT CURTIME() AS current_time; -- This returns the current time in HH:MM:SS format from the UTC timezone by default.
   ```
 - PostgreSQL:
   ```
@@ -963,17 +963,17 @@
     SELECT '2025-08-09'::date + INTERVAL '10 days' AS new_date; -- Returns 2025-08-19.
     ```
 - `DATE_SUB()` / `DATEADD()` with negative values – Subtract interval from a date:
-- MySQL:
-```
-SELECT DATE_SUB('2025-08-09', INTERVAL 5 DAY) AS new_date; -- Returns 2025-08-04.
-```
-- SQL Server:
-```
-SELECT DATEADD(day, -5, '2025-08-09') AS new_date; -- Returns 2025-08-04.
-```
-- PostgreSQL:
-```
-SELECT '2025-08-09'::date - INTERVAL '5 days' AS new_date; -- Returns 2025-08-04.
+  - MySQL:
+  ```
+  SELECT DATE_SUB('2025-08-09', INTERVAL 5 DAY) AS new_date; -- Returns 2025-08-04.
+  ```
+  - SQL Server:
+  ```
+  SELECT DATEADD(day, -5, '2025-08-09') AS new_date; -- Returns 2025-08-04.
+  ```
+  - PostgreSQL:
+  ```
+  SELECT '2025-08-09'::date - INTERVAL '5 days' AS new_date; -- Returns 2025-08-04.
 ```
 
 ## DATE FORMAT
