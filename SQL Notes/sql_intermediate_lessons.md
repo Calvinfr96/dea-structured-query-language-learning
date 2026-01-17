@@ -974,7 +974,7 @@
   - PostgreSQL:
   ```
   SELECT '2025-08-09'::date - INTERVAL '5 days' AS new_date; -- Returns 2025-08-04.
-```
+  ```
 
 ## DATE FORMAT
 - The SQL `DATE_FORMAT` Function allows you to display date and time values in a human-readable manner. Instead of showing dates in the default `YYYY-MM-DD` format, you can format them to match reporting needs, cultural preferences, or business requirements.
