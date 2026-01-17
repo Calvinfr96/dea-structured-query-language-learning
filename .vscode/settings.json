@@ -2,10 +2,19 @@
   "cSpell.words": [
     "CURDATE",
     "CURTIME",
+    "customerid",
     "DATEADD",
     "DATEDIFF",
+    "employeeid",
     "Equi",
     "GETDATE",
-    "IFNULL"
+    "IFNULL",
+    "previousyearsalary",
+    "productid",
+    "productname",
+    "qualificationandskills",
+    "quantityinstock",
+    "quantitysold",
+    "saleid"
   ]
 }
