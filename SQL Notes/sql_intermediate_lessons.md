@@ -1,5 +1,220 @@
 # SQL Intermediate Lessons
 
+## SQL Function Summary
+- `GROUP BY`: Group rows of data based on the values in one or more columns of a table.
+  - `SELECT department, COUNT(*) AS employee_count FROM employees GROUP BY department;`
+  - **It's always best to group by non-aggregated columns from the `SELECT` Statement of a query.**
+- `COUNT`: Count the number of rows in either a table or group when used in conjunction with the `GROUP BY` Clause.
+  - `SELECT COUNT(*) AS any_salary FROM employees;` (counts null and non-null values)
+  - `SELECT COUNT(salary) AS non_null_salaries FROM employees;` (skips null values)
+- Subqueries: Embed one query within another query.
+  - Single Row (single value):
+    ```
+    SELECT
+      product_name,
+      unit_price
+    FROM products
+    WHERE unit_price > (
+      SELECT
+        AVG(unit_price)
+      FROM products
+    );
+    ```
+  - Multiple Row (multiple values):
+    ```
+    SELECT
+      order_im
+    FROM orders
+    WHERE customer_id IN (
+      SELECT
+        customer_id
+      FROM customers
+      WHERE country = 'USA'
+    );
+    ```
+  - Correlated (reference main query in subquery):
+    ```
+    SELECT
+      employee_id,
+      first_name,
+      last_name
+    FROM employees e
+    WHERE salary > (
+      SELECT
+        AVG(salary)
+      FROM employees
+      WHERE department_id = e.department_id
+    );
+    ```
+  - Using `Exists`:
+    ```
+    SELECT
+      product_name
+    FROM products
+    WHERE EXISTS (
+      SELECT 1
+      FROM order_details
+      WHERE product_id = products.product_id
+    );
+    ```
+    - Ensures subquery returns at least one row.
+- `MAX`: Retrieve the largest (non-null) value in a specified column.
+  - `SELECT MAX(order_amount) AS largest_order_amount FROM orders WHERE order_status = 'Completed';`
+- `MIN`: Retrieve the lowest (non-null) value in a specified column.
+  - `SELECT department, MIN(salary) AS min_salary FROM employees GROUP BY department;`
+- `SUM`: Calculate the sum of numeric (non-null) values in a specified column.
+  - `SELECT department, SUM(salary) AS total_salary_expense FROM employees GROUP BY department;`
+- `AVG`: Calculate the average of numeric (non-null) values in a specified column.
+  - `SELECT AVG(rating) AS average_rating FROM product_reviews WHERE product_id = 101;`
+- `HAVING`: Filter the results of grouped data based on specified conditions.
+  - `SELECT department, AVG(salary) AS average_salary FROM employees WHERE is_active = 1 GROUP BY department HAVING AVG(salary) > 50000;`
+- Subquery with Aggregate Functions: Aggregate data in multiple stages.
+  ```
+  SELECT
+    rating_date,
+    AVG(rating) OVER (ORDER BY rating_date) AS avg_rating
+  FROM (
+    SELECT
+      rating_date,
+      AVG(rating) AS rating
+    FROM ratings
+    GROUP BY rating_date
+  ) AS stage1;
+  ```
+  - Here, the `OVER` Clause allows you to perform aggregations across groups (partitions) of rows without collapsing the rows as `GROUP BY` would. This would be useful, for example, if you wanted to display total category purchases for every item instead of each category.
+- `CASE`: Apply conditional logic to queries.
+  ```
+  SELECT
+    department,       
+    COUNT(*) AS total_employees,       
+    SUM(
+      CASE
+        WHEN is_manager = 1 THEN 1
+        ELSE 0
+      END
+    ) AS total_managers
+  FROM employees
+  GROUP BY department;
+  ```
+- `LEFT JOIN`: Combine data from two or more tables based on a common column, even if there are incomplete matches in the **second table**.
+  ```
+  SELECT
+    customers.customer_id,
+    orders.order_id,
+    orders.order_date
+  FROM customers LEFT JOIN orders
+  ON customers.customer_id = orders.customer_id;
+  ```
+- `RIGHT JOIN`: Combine data from two or more tables based on a common column, even if there are incomplete matches in the **first table**.
+  ```
+  SELECT
+    orders.order_id,
+    orders.order_date,
+    customers.customer_name
+  FROM orders RIGHT JOIN customers
+  ON orders.customer_id = customers.customer_id;
+  ```
+- `INNER JOIN`: Combine data from two or more tables using a common column, including **only matching records** from both tables.
+  ```
+  SELECT
+    orders.order_id,
+    orders.order_date,
+    customers.customer_name
+  FROM orders INNER JOIN customers
+  ON orders.customer_id = customers.customer_id;
+  ```
+  - Most efficient type of join. Excludes non-null records from **both** tables.
+  - Can also be referred to as `JOIN`.
+- `OUTER JOIN`: Merge data from two or more tables that share a common column, including both matching and non-matching records from **both** tables.
+  ```
+  SELECT
+    customers.customer_id,
+    customers.customer_name,
+    orders.order_id,
+    orders.order_date
+  FROM customers FULL OUTER JOIN orders
+  ON customers.customer_id = orders.customer_id;
+  ```
+  - The three types of `OUTER JOIN` are full (default), left, and right. `LEFT OUTER JOIN` is equivalent to `LEFT JOIN`.
+  - Least efficient type of join.
+- Join with `WHERE`: Merge data based in two or more tables based on values in a shared column as well as filtering logic specified in the `WHERE` Clause.
+  ```
+  SELECT orders.order_id, order_items.product_name, customers.customer_name
+  FROM orders JOIN order_items
+  ON orders.order_id = order_items.order_id JOIN customers
+  ON orders.customer_id = customers.customer_id
+  WHERE order_items.unit_price > 50;
+  ```
+  - The `WHERE` Clause can be applied to columns that both were and were not involved in the join(s).
+- `SELF JOIN`: Combine data from a table with itself, creating a temporary relationship between rows within the same table. Especially useful when working with hierarchical data.
+  ```
+  SELECT
+    e.employee_id,
+    e.employee_name,
+    m.employee_name AS manager_name
+  FROM employees AS e JOIN employees AS m
+  ON e.manager_id = m.employee_id;
+  ```
+  - **Remember, the joining doesn't occur row by row (first row in table A with first row in table B), rows from each table are matched generally with one another (row in table A is matched generally with rows in table B)**.
+  - Always assign aliases to two instances of the same table.
+- Join with Comparison Operators: Combine data from two or more tables based on conditions other than equality.
+  ```
+  SELECT orders.order_id, orders.order_date, customers.customer_name
+  FROM orders JOIN customers
+  ON (
+    orders.customer_id = customers.customer_id
+    AND (orders.order_total > 1000 OR customers.country = 'Canada')
+  );
+  ```
+- Join with Multiple Keys: Combine two or more tables based on multiple columns.
+  ```
+  SELECT orders.order_id, orders.order_date, customers.customer_name
+  FROM orders JOIN customers ON (
+    orders.customer_id = customers.customer_id
+    AND orders.shipping_address = customers.address
+  );
+  ```
+  - Can negatively impact query performance, especially when working with large datasets.
+- `DISTINCT`: Retrieve unique values from a specified column in a table.
+  - `SELECT DISTINCT product_name FROM products WHERE price > 1000 ORDER BY product_name;`
+  - `SELECT COUNT(DISTINCT department) AS total_departments FROM employees;`
+- `UNION`: Combine corresponding rows from multiple `SELECT` queries into a single result set _while also removing duplicate rows_ by default.
+  ```
+  SELECT
+    order_id,
+    amount
+  FROM orders WHERE customer_id = 101
+  UNION
+  SELECT
+    invoice_id AS order_id,
+    total_amount AS amount
+  FROM invoices WHERE customer_id = 101;
+  ```
+  - **Ensure that the `SELECT` queries in a `UNION` have the same number of columns and compatible data types.**
+  - In the context of `UNION`, duplicate rows are those where _all columns_ match.
+  - Use `UNION ALL` when you need to include all rows from both data sets.
+- `CURDATE`: Get the current date.
+  - `SELECT CURDATE() AS current_date; -- This returns the current date (e.g., 2025-08-09).`
+- `CURTIME`: Get the current time.
+  - `SELECT CURTIME() AS current_time; -- This returns the current time in HH:MM:SS format from the UTC timezone by default.`
+- `NOW`: Get current date and time.
+  - `SELECT NOW() AS current_datetime; -- Uses UTC timezone by default.`
+- `DATEDIFF`: Calculate the difference between two dates.
+  - `SELECT DATEDIFF('2025-08-15', '2025-08-09') AS days_diff; -- Returns 6 (Because each date is assumed to be at midnight).`
+- `DATE_ADD`: Add interval (days, months, years, or other intervals) to a date.
+  - `SELECT DATE_ADD('2025-08-09', INTERVAL 10 DAY) AS new_date; -- Returns 2025-08-19.`
+- `DATE_SUB`: Subtract interval from a date.
+  - `SELECT DATE_SUB('2025-08-09', INTERVAL 5 DAY) AS new_date; -- Returns 2025-08-04.`
+- `DATE_FORMAT`: Display date and time values in a human-readable manner.
+  ```
+  SELECT
+      order_id,
+      order_date,
+      DATE_FORMAT(order_date, '%M %d, %Y') AS formatted_date,
+      DATE_FORMAT(order_date, '%W at %h:%i %p') AS friendly_time
+  FROM orders;
+  ```
+
 ## GROUP BY
 - The SQL `GROUP BY` Clause is a tool in SQL that allows you to group rows of data based on the values in one or more columns of a table. This function comes in handy especially when performing aggregate functions on specific groups of data, such as calculating totals, averages, counts, or other statistical measures.
 - The `GROUP BY` Clause is commonly used in conjunction with aggregate functions such as `SUM`, `COUNT`, and `AVG`.

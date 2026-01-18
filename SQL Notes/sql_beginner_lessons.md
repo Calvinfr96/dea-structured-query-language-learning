@@ -1,5 +1,40 @@
 # SQL Beginner Lessons
 
+## SQL Function Summary
+- `SELECT`: Specify the columns to include in a result set.
+  - `SELECT * FROM table_name;` or `SELECT column_name FROM table_name;`
+- `FROM`: Specify the table from which you want to retrieve data.
+  - `SELECT * FROM table_name;`
+- `WHERE`: Specify how you want to filter a result set.
+  - `SELECT * FROM employees WHERE salary > 50000 AND department = 'Sales';`
+- Comparison Operators: `=, !=, <>, <, >, <=, >=`
+  - `SELECT * FROM orders WHERE order_amount > 1000`
+- Logical Operators: `NOT`, `AND`, `OR`
+  - `SELECT * FROM orders WHERE (order_amount > 1000 AND order_status = 'Pending') OR (order_status = 'Processing');`
+- `LIKE`: Perform pattern matching on text data.
+  - `SELECT * FROM customers WHERE customer_name LIKE 'Joh%';`
+  - `SELECT * FROM employees WHERE last_name LIKE 'Sm_th';`
+- `IN`: Filter data based on multiple conditions (a list of values) while avoiding multiple `OR` conditions.
+  - `SELECT * FROM products WHERE category IN ('Electronics', 'Appliances', 'Office Supplies');`
+- `BETWEEN`: Filter data based on an **inclusive** range of data.
+  - `SELECT * FROM products WHERE unit_price BETWEEN 50 AND 100;`
+- `IS NULL`/`IS NOT NULL`: Determine whether a value is null.
+  - `SELECT * FROM customers WHERE email IS NULL;`
+  - `SELECT * FROM employees WHERE manager_id IS NOT NULL;`
+- `AND`: Combine multiple conditions when all should be true
+  - `SELECT * FROM employees WHERE department = 'Sales' AND salary > 50000;`
+- `OR`: Combine multiple conditions when only one needs to be true.
+  - `SELECT * FROM employees WHERE department = 'Sales' OR salary > 50000;`
+- `NOT`: Negate the value of a boolean condition
+  - `SELECT * FROM employees WHERE salary NOT BETWEEN 40000 AND 60000;`
+  - `SELECT * FROM employees WHERE NOT department = 'Sales'`
+- `ORDER BY`: Sort the result set of a query in a specified order.
+  - `SELECT first_name, last_name FROM employees ORDER BY first_name ASC, last_name DESC;`
+- `LIMIT`: Limit the size of a result set by a specified amount.
+  - `SELECT * FROM employees LIMIT 10;`
+- `OFFSET`: Skip a specified number of rows in the result set and retrieve the subsequent rows. Often used in conjunction with `LIMIT`.
+  - `SELECT * FROM customers LIMIT 5 OFFSET 10;` (retrieves the 11th through 15th rows)
+
 ## SELECT FROM
 - `SELECT FROM` is the main statement that is used for querying database tables in SQL. The general syntax for the statement is `SELECT {columns} FROM {table};`:
   - Example `SELECT FROM` Statement (selecting specific columns):
@@ -286,7 +321,7 @@
   SELECT * FROM customers WHERE email IS NULL;
   ```
   - This query will return all details for customers that are missing an email address.
-- The `IS NOT NULL` Operator checks if a column does not contail any missing or unknown values. For example:
+- The `IS NOT NULL` Operator checks if a column does not contain any missing or unknown values. For example:
   ```
   SELECT * FROM employees WHERE manager_id IS NOT NULL;
   ```
@@ -431,7 +466,7 @@
   - This query will word orders according to their order date in ascending, chronological order.
 
 ### Limiting Sorting Results
-- You can combine `ORDER BY` with the `LINIT` Clause to restrict the number of sorted rows returned in the result set. For example:
+- You can combine `ORDER BY` with the `LIMIT` Clause to restrict the number of sorted rows returned in the result set. For example:
   ```
   SELECT product_name, unit_price FROM products ORDER BY unit_price DESC LIMIT 10;
   ```

@@ -9,12 +9,15 @@
     "Equi",
     "GETDATE",
     "IFNULL",
+    "Macbook",
+    "Macbooks",
     "previousyearsalary",
     "productid",
     "productname",
     "qualificationandskills",
     "quantityinstock",
     "quantitysold",
-    "saleid"
+    "saleid",
+    "Smyth"
   ]
 }
