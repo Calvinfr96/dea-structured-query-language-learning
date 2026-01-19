@@ -1,23 +1,30 @@
 {
   "cSpell.words": [
+    "CHARINDEX",
     "CURDATE",
     "CURTIME",
     "customerid",
     "DATEADD",
     "DATEDIFF",
+    "DAYOFWEEK",
     "employeeid",
     "Equi",
     "GETDATE",
     "IFNULL",
+    "ISNULL",
+    "LTRIM",
     "Macbook",
     "Macbooks",
+    "multibyte",
     "previousyearsalary",
     "productid",
     "productname",
     "qualificationandskills",
     "quantityinstock",
     "quantitysold",
+    "RTRIM",
     "saleid",
-    "Smyth"
+    "Smyth",
+    "VARCHAR"
   ]
 }
