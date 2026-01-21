@@ -281,45 +281,318 @@ ON c.customer_id = o.customer_id; -- Correct!
 
 
 /*
-Question 11: COALESCE
+  Question 11: COALESCE
+
+  Find out all the employee_id, employee first_name as "employee_first_name", their manager first_name as "manager_name" and manager_id. Employees who do not have a manager or they are highest in hierarchy, assign 'Manager' as the columnar value for "manager_name" and "X" as 'manager_id'.
+
+  Input Format: The employees table with the following columns:
+  ColumnNames		DataType		
+  employee_id		int		
+  first_name		varchar
+  last_name		varchar  
+  department		varchar 
+  salary			decimal
+  manager_id		int
 */
+
+SELECT
+  e.employee_id,
+  e.first_name AS employee_first_name,
+  COALESCE(m.employee_id, 'X') AS manager_id,
+  COALESCE(m.first_name, 'Manager') AS manager_name
+FROM employees e LEFT JOIN employees m
+ON e.manager_id = m.employee_id; -- Correct!
+-- We join employees with managers (instead of managers with employees) because an employee is much less likely to have a manager than a manager to have no employees.
 
 
 /*
-Question 12: SUBQUERY IN CONDITION
+  Question 12: SUBQUERY IN CONDITION
+
+  Retrieve product_id, product_name, unit_price and category that have a price higher than the average price of products within their respective categories.
+
+  Table: products 
+  ColumnName          DataType
+  product_id          int
+  product_name        varchar 
+  category            varchar
+  unit_price          decimal
 */
+
+SELECT
+  product_id,
+  product_name,
+  unit_price,
+  category
+FROM products
+WHERE product_id IN (
+  SELECT
+    product_id
+  FROM products AS allProducts
+  WHERE unit_price > (
+    SELECT
+      AVG(unit_price)
+    FROM products AS categoryProducts
+    WHERE allProducts.category = categoryProducts.category -- We don't use GROUP BY here because that would return an average for each category.
+  )
+); -- Correct!
+
+SELECT
+  product_id,
+  product_name,
+  unit_price,
+  category
+FROM products AS allProducts
+WHERE unit_price > (
+  SELECT
+    AVG(unit_price)
+  FROM products categoryProducts
+  WHERE allProducts.category = categoryProducts.category
+); -- Alternative (less complicated) solution.
 
 
 /*
-Question 13: WITH STATEMENTS
+  Question 13: WITH STATEMENTS (CTEs)
+
+  Retrieve department names, the total number of employees in each department, and the average salary, but include only those departments where the average salary exceeds the overall average salary across all employees.
+
+  Table: employees
+  ColumnNames		DataType		
+  employee_id		int		
+  first_name		varchar
+  last_name		varchar  
+  department		varchar 
+  salary			decimal
+  manager_id		int
 */
+
+WITH OverallSalary AS (
+  SELECT
+    AVG(salary) AS average_overall_salary
+  FROM employees
+)
+
+SELECT
+  department,
+  COUNT(*) AS total_employees,
+  AVG(salary) AS average_salary
+FROM employees
+GROUP BY department
+HAVING average_salary > average_overall_salary; -- Incorrect. We need to reference the CTE in somehow in the main query in order to use average_overall_salary.
+
+WITH DepartmentStats AS (
+  SELECT
+    department,
+    COUNT(*) AS total_employees,
+    AVG(salary) AS average_salary
+  FROM employees
+  GROUP BY department
+),
+OverallStats AS (
+  SELECT
+    AVG(salary) AS average_overall_salary
+  FROM employees
+)
+
+SELECT
+  ds.department,
+  ds.total_employees,
+  ds.average_salary
+FROM DepartmentStats AS ds JOIN OverallStats AS os
+ON ds.average_salary > os.average_overall_salary; -- Solution
+-- This solution uses CTEs to perform the necessary calculations in stages.
+-- In the first stage, employee count and average salary per department is calculated and saved in a CTE.
+-- In the second stage, the overall average salary is calculated for all employees and saved in a CTE.
+-- Lastly, we select the needed columns from each CTE and join the CTEs on the following condition: ds.average_salary > os.average_overall_salary;.
+-- Joining on this condition ensures only records that meet the necessary criteria are returned.
 
 
 /*
-Question 14: WINDOW FUNCTIONS
+  Question 14: WINDOW FUNCTIONS
+
+  Calculate the rank of customers as "rank" based on their total order_amount (from highest to lowest). Display customer_id, customer_name, order_amount and rank for all customers who ordered.
+
+  Table: customers
+  ColumnName          Datatype           
+  customer_id         int 
+  customer_name       varchar
+  age                 int 
+  city                varchar
+  email               varchar
+  address           varchar
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
 */
+
+-- Unable to formulate solution
+
+WITH GroupedCustomers AS (
+  SELECT
+    c.customer_id AS customer_id,
+    c.customer_name AS customer_name,
+    SUM(o.order_amount) AS order_amount
+  FROM customers c JOIN orders o
+  ON c.customer_id = o.customer_id
+  GROUP BY o.customer_id
+)
+
+SELECT
+  customer_id,
+  customer_name,
+  order_amount,
+  RANK() OVER(ORDER BY order_amount DESC) AS 'rank'
+FROM GroupedCustomers; -- Solution
 
 
 /*
-Question 15: WINDOW FUNCTION WITH AGGREGATE FUNCTION
+  Question 15: WINDOW FUNCTION WITH AGGREGATE FUNCTION
+
+  Retrieve the first_name, last_name, salary, average departmental salary as "avg_department_salary", and salary difference as "salary_difference" from the average for each employee.
+
+  Table: employees
+  ColumnNames		DataType		
+  employee_id		int		
+  first_name		varchar
+  last_name		varchar  
+  department		varchar 
+  salary			decimal
+  manager_id		int
 */
+
+WITH AverageDepartmentSalary AS (
+  SELECT
+    department,
+    AVG(salary) AS average_department_salary
+  FROM employees
+  GROUP BY department
+)
+
+SELECT
+  first_name,
+  last_name,
+  salary,
+  average_department_salary,
+  (salary - average_department_salary) AS salary_difference
+FROM employees AS e JOIN AverageDepartmentSalary AS a
+ON e.department = a.department; -- Correct!
+-- This solution uses a CTE without utilizing window functions.
+-- You could also use the 'AVG(salary) OVER(PARTITION BY department)' window function here instead of GROUP BY.
+-- This would allow you to retrieve all of the fields in the CTE and avoid joining the CTE in the main query.
+
+SELECT
+  first_name,
+  last_name,
+  salary,
+  AVG(salary) OVER(PARTITION BY department) AS average_department_salary,
+  (salary - AVG(salary) OVER(PARTITION BY department)) AS salary_difference
+FROM employees; -- Correct!
+-- The CTE solution is probably more efficient because you need to calculate the average twice.
+-- Calculating the average twice is required because the alias can't be referenced in the same SELECT statement where it was defined.
 
 
 /*
-Question 16: ROW NUMBER
+  Question 16: ROW NUMBER
+
+  Retrieve the top 3 orders with the highest order_amount values, along with their order_id, customer_id, order_date and order_amount. Additionally, assign a unique row number as "row_num"  to each of these orders based on the descending order of order_amount values. 
+
+  Hint: Use LIMIT to restrict results to 3 rows
+
+  Table: orders
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
 */
+
+SELECT
+  ROW_NUMBER() OVER (ORDER BY order_amount DESC) AS row_num,
+  order_id,
+  customer_id,
+  order_date,
+  order_amount
+FROM orders
+ORDER BY order_amount DESC
+LIMIT 3; -- Correct!
 
 
 /*
-Question 17: RANK
+  Question 17: RANK
+
+  Retrieve the first_name, last_name, department and salary for each department, including their rank as "rank" within the department based on salary.
+
+  Table: employees
+  ColumnNames		DataType		
+  employee_id		int		
+  first_name		varchar
+  last_name		varchar  
+  department		varchar 
+  salary			decimal
+  manager_id		int
 */
+
+SELECT
+  RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS rank,
+  first_name,
+  last_name,
+  salary,
+  department
+FROM employees; -- Correct!
 
 
 /*
-Question 18: LEAD
+  Question 18: LEAD
+
+  Retrieve a list of products along with their product_name, category and unit_price, including the name as "next_product_name" and price as "next_product_price" of the next higher-priced product within the same category. Additionally add 'X' to name in case where it is the last product in the list as per higher price logic and '0' for the price.
+
+  Table: products 
+
+  ColumnName          DataType
+  product_id          int
+  product_name        varchar 
+  category            varchar
+  unit_price          decimal
 */
+
+SELECT
+  product_name,
+  unit_price,
+  LEAD(product_name, 1, 'X') OVER (PARTITION BY category ORDER BY unit_price) AS next_product_name,
+  LEAD(unit_price, 1, 0) OVER (PARTITION BY category ORDER BY unit_price) AS next_product_price,
+  category
+FROM products; -- Correct!
+-- You could also only specify the first argument in LEAD, then use COALESCE to handle null values.
 
 
 /*
-Question 19: LAG
+  Question 19: LAG
+
+  Retrieves a list of orders along with their order_id, order_date, order_amount and customer_id, and includes the order_date as "previous_order_date" and order_amount as "previous_total_amount" of the previous order made by the same customer. 
+
+  Table: orders
+
+  ColumnName      DataType
+  order_id        int
+  order_date      date
+  order_amount    decimal
+  customer_id     int
+  order_status    varchar
+  shipping_address   varchar
 */
+
+SELECT
+  order_id,
+  order_date,
+  order_amount,
+  LAG(order_date) OVER (PARTITION BY customer_id ORDER BY order_date) AS previous_order_date,
+  LAG(order_amount) OVER (PARTITION BY customer_id ORDER BY order_date) AS previous_total_amount,
+  customer_id
+FROM orders; -- Correct!

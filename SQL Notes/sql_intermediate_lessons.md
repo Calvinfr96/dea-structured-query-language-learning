@@ -155,6 +155,7 @@
   FROM employees AS e JOIN employees AS m
   ON e.manager_id = m.employee_id;
   ```
+  - **`SELF JOIN` is really a `SELF INNER JOIN`. You don't need to use `SELF JOIN` to join a table with itself. You can use any type of join you want.**
   - **Remember, the joining doesn't occur row by row (first row in table A with first row in table B), rows from each table are matched generally with one another (row in table A is matched generally with rows in table B)**.
   - Always assign aliases to two instances of the same table.
 - Join with Comparison Operators: Combine data from two or more tables based on conditions other than equality.
@@ -742,7 +743,8 @@
 ## LEFT JOIN
 - The SQL `LEFT JOIN` Function is a powerful tool that allows you to combine data from two or more tables based on a common column, even if there are incomplete matches in the **second table**.
 - The function is particularly useful in cases where you need to include records from one table and include any matching records from another table.
-  - Note: Here, "matching" means records (rows) that satisfy the conditions of the `ON` Clause in the function. `NULL` will be displayed for values (columns) of non-matching records.
+  - Note: Here, "matching" means records (rows) that satisfy the conditions of the `ON` Clause in the function. `NULL` will be displayed for **all** values (columns) of non-matching records (rows). In other words, for non-matching rows, only columns from the "prioritized" table are preserved.
+  - `LEFT JOIN` is much more commonly used than `RIGHT JOIN` because `LEFT JOIN` aligns with the left-to-right reading order of the code. `RIGHT JOIN` is considered to be less readable an "anti-pattern".
 - The `LEFT JOIN` is commonly used with `SELECT` to merge data from two or more tables in order to gain comprehensive insights from your database.
 - The basic syntax of the `LEFT JOIN` Function is as follows:
   ```
