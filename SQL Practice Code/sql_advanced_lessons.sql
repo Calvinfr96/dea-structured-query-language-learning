@@ -377,7 +377,7 @@ SELECT
   AVG(salary) AS average_salary
 FROM employees
 GROUP BY department
-HAVING average_salary > average_overall_salary; -- Incorrect. We need to reference the CTE in somehow in the main query in order to use average_overall_salary.
+HAVING average_salary > average_overall_salary; -- Incorrect. We need to reference the CTE somehow in the main query in order to use average_overall_salary.
 
 WITH DepartmentStats AS (
   SELECT

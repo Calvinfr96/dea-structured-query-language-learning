@@ -1,5 +1,160 @@
 # SQL Advanced Lessons
 
+## SQL Function Summary
+- Data Types: Determine how data is stored, manipulated, and retrieved within a a database.
+  - Numeric:
+    - `INT`
+    - `DECIMAL(p, s)`
+    - `FLOAT`
+  - Character:
+    - `CHAR(n)`
+    - `VARCHAR(n)`
+  - Date and Time:
+    - `DATE` ('YYYY-MM-DD')
+    - `TIME(n)` ('hh:mm:ss.nnn')
+    - `TIMESTAMP` ('YYYY-MM-DD HH:MM:SS')
+  - Boolean:
+    - `BOOLEAN`
+  - Binary:
+    - `BLOB`
+  - Miscellaneous:
+    - `JSON`
+    - `XML`
+    - `UUID`
+- `CONCAT`: Combine two or more strings into a composite string. **Treats null values as empty strings.**
+  ```
+  SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM students;
+  ```
+- `CAST`: Covert one data type to another, compatible data type.
+  ```
+  SELECT CAST('123.45' AS DECIMAL(5, 2)) AS converted_value;
+  ```
+- `LENGTH`: Determine the length (number of characters, including spaces) of a string.
+  ```
+  SELECT article_title, LENGTH(article_content) AS content_length FROM articles ORDER BY content_length DESC;
+  ```
+- `SUBSTRING`: Extract specific portions of text or character data from a given string.
+  ```
+  SELECT SUBSTRING(product_name, 4, LEN(product_name)) AS cleaned_name FROM products;
+  ```
+  - The length parameter indicates the _maximum_ length, not the required length.
+- `CHARINDEX`: Determine the position of the _first occurrence_ of a substring within a given string. Return 0 when no match is found.
+  ```
+  SELECT order_id FROM orders WHERE CHARINDEX('@', customer_email, 0) > 0;
+  ```
+  - The third parameter specifies the starting position of the search and is **optional**.
+  - The substring search is **case-insensitive**.
+- `SUBSTRING_INDEX`: Extract a substring based on a delimiter's occurrence and count within a given string.
+  ```
+  SELECT SUBSTRING(
+    text_data,
+    CHARINDEX('[', text_data) + 1,
+    CHARINDEX(']', text_data) - CHARINDEX('[', text_data) - 1
+  ) AS extracted_data FROM content;
+
+  SELECT SUBSTRING_INDEX(
+    SUBSTRING_INDEX(text_data, '[', -1),
+    ']',
+    1
+  ) AS extracted_data FROM content;
+  ```
+  - For the third parameter, a positive count starts counting occurrences of the delimiter from the left and returns characters _before_ the nth occurrence _from the left_.
+  - For the third parameter, a negative count starts counting occurrences of the delimiter from the right and returns characters _after_ the nth occurrence _from the right_.
+- `TRIM`: Remove leading or trailing spaces (or other characters) from a given string.
+  ```
+  SELECT product_id, TRIM(TRAILING ' ' FROM product_name) AS trimmed_product_name, unit_price FROM products;
+  ```
+  - Options for the first keyword include `LEADING` (from the left), `TRAILING` (from the right), and `BOTH` (default when keyword is omitted).
+  - `LTRIM` and `RTRIM` are alternative functions that behave the same way as `LEADING` and `TRAILING`, respectively.
+- `LEFT`: Extract a specific number of characters from the beginning of a string.
+  ```
+  SELECT LEFT(full_name, 10) AS short_name FROM employees;
+  ```
+- `RIGHT`: Extract a specific number of characters from the end of a string.
+  ```
+  SELECT RIGHT(product_code, 4) AS last_digits FROM products;
+  ```
+- `UPPER`: Format a given string to uppercase.
+  ```
+  SELECT UPPER(product_name) AS capitalized_name FROM products;
+  ```
+- `LOWER`: Format a given string to lowercase.
+  ```
+  SELECT product_name FROM products WHERE LOWER(product_name) = 'smartphone';
+  ```
+- `EXTRACT`: Retrieve specific components (year, month, day, hour, minute, second), as a number, from a given date or time value.
+  ```
+  SELECT EXTRACT(MONTH FROM hire_date) AS hire_month FROM employees;
+  ```
+- `COALESCE`: Handle null values effectively by providing a fallback value.
+  ```
+  SELECT product_name, COALESCE(unit_price, 0.00) AS adjusted_price FROM products;
+  ```
+  - The function can accept more than two parameters and will return the first non-null value among those parameters.
+- Subquery in Condition: Perform tasks such as retrieving information from related tables, comparing values, and applying filters based on specific conditions.
+  ```
+  SELECT
+    product_name,
+    CASE
+      WHEN unit_price > (SELECT AVG(unit_price)FROM products) THEN 'Above Avg'
+      ELSE 'Below Avg'
+    END AS price_category
+  FROM products;
+  ```
+- `WITH` (CTE): Breakdown complex queries into manageable chunks. Results a temporary table that is stored in working memory and only available to the statement immediately following it.
+  ```
+  WITH Stage1 AS (
+      SELECT
+          DATE_FORMAT(order_date, '%Y-%m') AS month,
+          order_amount AS amount
+      FROM orders
+  ),
+  CumulativeSales AS (
+      SELECT
+          month,
+          SUM(amount) AS monthly_sales
+      FROM Stage1
+      GROUP BY month
+  )
+  SELECT *
+  FROM CumulativeSales;
+  ```
+- Window Functions: Perform calculations across a "window" of rows related to the current row.
+  ```
+  SELECT date, revenue, AVG(revenue) OVER (ORDER BY date ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS moving_avg FROM sales;
+  ```
+  - The `OVER` Clause defines the "window" or set of related rows within a query result set on which a calculation is performed. **Unlike the `GROUP BY` Clause, it performs calculations without collapsing the individual rows of the result**. This is beneficial because it allows aggregate or ranking information to be displayed alongside individual row details.
+  - Default Window Frame When `PARTITION BY` and `ORDER BY` is Excluded: `RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`.
+  - Default Window Frame When `PARTITION BY` is Excluded and `ORDER BY` is Included: `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`.
+  - `RANGE` considers rows with identical values (according to `ORDER BY`) as peers (groups them together in the window frame) while `ROWS` treats each row as a distinct entities.
+  - **`ROWS` is considered to be more ideal than `RANGE` for enhanced performance and precision.**
+- Window Functions With Aggregate Functions: Combine Window Functions with Aggregate Functions to perform advanced data retrieval and analysis.
+  ```
+  SELECT order_date, order_amount, AVG(order_amount) OVER (ORDER BY order_date ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS moving_avg FROM orders;
+  ```
+- `ROW_NUMBER`: Assign a unique, sequential integer to each row in a partitioned and ordered result set, without impacting original data.
+  ```
+  SELECT employee_id, first_name, last_name, ROW_NUMBER() OVER (ORDER BY last_name) AS row_num FROM employees WHERE row_num BETWEEN 11 AND 20;
+  ```
+  - **Cannot be used in a `WHERE` Clause because Window Functions are logically processed after `WHERE` is applied.**
+  ```
+  SELECT product_name, unit_price, ROW_NUMBER() OVER (ORDER BY unit_price DESC) AS price_rank FROM products;
+  ```
+- `RANK`: Assign a unique rank to each row in a partitioned and ordered result set based on specified criteria.
+  ```
+  SELECT department_id, employee_name, salary, RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS dept_rank FROM employees;
+  ```
+  - When two rows with identical values are encountered, then they are assigned the same rank, then subsequent ranks are skipped. For example, if two rows were assigned a rank of one, the next row would be assigned a rank of 3 instead of 2. If three rows had a rank of one, the next row would be assigned a rank of 4.
+- `LEAD`: Access data from a subsequent row within a result set.
+  ```
+  SELECT date, stock_price, LEAD(stock_price) OVER (ORDER BY date) AS next_day_price_change FROM stock_prices;
+  ```
+  - Offset and Default Value (the second and third parameters) are optional. Offset is the number of rows from the current row to look back for the row that should be returned. Default Value is the value returned when there is no preceding row based on the offset. The default values for these parameters are 1 and null.
+- `LAG`: Access data from a preceding row within a result set.
+  ```
+  SELECT purchase_date, purchase_amount, LAG(purchase_amount) OVER (ORDER BY purchase_date) AS previous_purchase_amount FROM customer_purchases;
+  ```
+
 ## DATA TYPES
 - SQL Data Types play a crucial role in determining how data is stored, manipulated, and retrieved in a database. Each data type serves a specific purpose, ensuring data integrity, optimizing storage, and facilitating query processing.
 - SQL Data Types are broadly classified into the following categories:
@@ -373,7 +528,7 @@ SELECT CASE WHEN LENGTH(username) > 15 THEN LEFT(username, 15) + '...' ELSE user
   ```
   SELECT EXTRACT(YEAR FROM order_date) AS order_year FROM orders;
   ```
-- Example 1 - Extracting Month:
+- Example 2 - Extracting Month:
   ```
   SELECT EXTRACT(MONTH FROM hire_date) AS hire_month FROM employees;
   ```
@@ -607,7 +762,7 @@ SELECT CASE WHEN LENGTH(username) > 15 THEN LEFT(username, 15) + '...' ELSE user
   - The window will shrink to include only rows that exist for rows at the beginning and end of the table, where there aren't 2 preceding rows or two following rows. For example, at the first row, the window will include the current row and two following rows.
 
 ## WINDOW FUNCTION WITH AGGREGATE FUNCTION
-- The SQL Window Function can be combined with various Aggregate Functions to perform more advanced data retrieval and analysis. When used within CTEs, the aggregate function is applied across the specific "window" of rows defined by the CTE. This facilitates gaining insights into trends, rankings, and comparisons within the defined window.
+- The SQL Window Function can be combined with various Aggregate Functions to perform more advanced data retrieval and analysis. When used within Window Functions, the aggregate function is applied across the specific "window" of rows defined by the CTE. This facilitates gaining insights into trends, rankings, and comparisons within the defined window.
 - Common Use Cases:
   - Running Totals: Calculate cumulative totals within a specific window of rows.
   - Moving Averages: Compute averages for a range of rows around each row to which the Window Function is applied.
