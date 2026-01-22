@@ -1,5 +1,42 @@
 # How to Solve SQL Problems
 
+## Extracting Keywords
+- Aggregation: Total, Sum, Count, Average, Minimum, Maximum, etc.
+  - Available Functions: `SUM`, `COUNT`, `AVG`, `MIN`, `MAX`, etc.
+  - Don't mix up `SUM` and `COUNT`. `SUM` is for finding the total value of cells by adding. `COUNT` is for counting the occurrence of null and/or non-null values within cells.
+- Grouping: Per (i.e. per customer, per year, per product, etc.).
+  - Available Functions: `GROUP BY`
+- Ranked Aggregations: Most, Top, Least, Highest, Lowest, etc.
+  - Available Functions: `ORDER BY`, `LIMIT`, `RANK`, `DENSE_RANK`, etc.
+- User Behavior/Events:
+  - Count Users Over Time By Behavior: "Active Users", "Returning Users", etc.
+    - Available Functions: `COUNT`, `DISTINCT`, `JOIN`, etc.
+  - Negate or Exclusion: "Did not", "Never", "Missing", etc.
+    - Available Functions: `NOT IN`, `LEFT JOIN`, `IS NULL`, `EXCEPT`, etc.
+  - Filter by Count or Threshold: "Only", "Exactly", "At least", "More than", etc.
+    - Available Functions: `HAVING`, `COUNT`, `WHERE`, `OVER`, etc.
+- Logic and Conditions:
+  - Condition Logic: If, When, Otherwise, etc.
+    - Available Functions: `CASE`, `WHEN`, etc.
+  - Set Comparisons: All, None, Any, Some, etc.
+    - Available Functions: `ALL`, `ANY`, `EXISTS`, `NOT EXISTS`, etc. (**Not commonly used**)
+  - Filtering Logic: Include, Exclude, etc.
+    - Available Functions: `WHERE`, `NOT IN`, `JOIN`, etc.
+- Joins and Relationships:
+  - Tables Are Linked: "Related", "Mapped", "Belongs to", etc.
+    - Available Functions" `JOIN` (using foreign keys), etc.
+  - Unmatched Rows: "Missing", "No match", "Don't have, but include" etc.
+    - Available Functions: `LEFT JOIN`, `WHERE`, `IS NULL`, etc.
+  - Multiple Tables Involved: "Each", "Every", "Multiple entities", etc.
+    - Available Functions: `JOIN`, `GROUP BY`, etc.
+- Date Filtering:
+  - Date Filtering: On, Before, After, Between, etc.
+    - Available Functions: `WHERE` with `BETWEEN`, etc.
+  - Relative Date Logic: "Last 30 days", "Previous month", etc.
+    - Available Functions: `CURRENT_DATE`, `INTERVAL`, `DATE_SUB`, etc.
+  - Day of Week Logic: Weekend, Weekday, etc.
+    - Available Functions: `DAYOFWEEK`, `WEEKDAY`, etc.
+
 ## Advice for Beginner Problems (Can Apply to Any Problem Type)
 - Determine what the question is asking and what resources have been provided to solve the problem.
 - Break down the problem by writing pseudocode.
