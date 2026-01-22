@@ -1,0 +1,466 @@
+# How to Solve SQL Problems
+
+## Advice for Beginner Problems (Can Apply to Any Problem Type)
+- Determine what the question is asking and what resources have been provided to solve the problem.
+- Break down the problem by writing pseudocode.
+- Break down the problem by dividing it into logical steps.
+- Ask the interviewer to clarify anything that is not clarified in the problem statement.
+- Think about the approach to solving the problem.
+  - Should you use a single query, subquery, or CTE. **A majority of questions can be solved using CTEs**.
+- Although most problems can be solved using CTEs, you should avoid doing so to avoid unnecessary complexity. A CTE can usually be avoided if tables can be joined.
+- **However, avoid using joins when data can be prepared separately without it. Use CTEs instead.**
+
+### Example 1 - High Satisfaction Hardware Tickets (Microsoft FAANG)
+Write a query to count the number of support tickets with a customer satisfaction score of 4 or 5 for products in the 'Hardware' category.
+
+Tables: support_tickets_microsoft, products_microsoft
+
+```
+Table Structure:
+
+Table: support_tickets_microsoft
+ColumnName		Datatype
+ticket_id 		INT
+product_id 		INT
+employee_id		INT
+ticket_date 	DATE 
+resolution_time_hours INT 
+customer_satisfaction INT 
+
+Table: products_microsoft
+ColumnName		Datatype
+product_id 		INT 
+product_name 	VARCHAR
+category 		VARCHAR
+```
+
+- Pseudocode:
+  - `COUNT` the number of support tickets.
+  - Support tickets should have a customer satisfaction score of 4 or 5.
+  - Support tickets should also be related to products in the hardware category.
+  - In one query, we could find all support tickets related to hardware products.
+  - In another query, we can take that result set and filter it down to tickets with satisfaction score of 4 or 5.
+  - Alternatively, instead of using two queries, we could use an inner join on product ID, then filter the results.
+- Solution:
+  ```
+  SELECT
+    pm.product_name,
+    COUNT(DISTINCT stm.ticket_id) AS high_satisfaction_tickets -- Although ticket_id likely won't have duplicates, using COUNT DISTINCT is a good practice.
+  FROM support_tickets_microsoft AS stm JOIN products_microsoft AS pm
+  ON stm.product_id = pm.product_id
+  WHERE pm.category = 'Hardware' AND stm.customer_satisfaction IN (4,5)
+  GROUP BY pm.product_name; -- This is required because you want a ticket count for each product. Without it, you'd get one count for all products.
+  ```
+
+### Example 2 - Analysis of Highly Rated and Frequently Reviewed Content (Netflix FAANG)
+Identify content that has received an average rating of 4 or more and has at least 5 reviews. Provide the following details:
+
+Content title
+
+Release year
+
+Average rating
+
+Number of reviews
+
+Tables: reviews_ntf, content
+
+Table names are CASE SENSITIVE
+
+```
+Table Structure:
+
+Table: reviews_ntf
+ColumnName		Datatype
+review_id 		INT
+content_id 		INT
+profile_id 		INT
+rating 			INT
+review_text 	TEXT
+review_date 	DATE
+
+Table: content
+ColumnName		Datatype
+content_id 		INT
+title 			VARCHAR
+series_id 		VARCHAR
+release_date 	DATE
+duration_minutes INT
+age_rating 		ENUM
+```
+
+- Pseudocode:
+  - Provide the following details for Netflix content:
+    - Content title
+    - Release year
+    - Average rating
+    - Number of reviews
+  - Only provide these details under the following conditions:
+    - Content has an average rating of 4 or more.
+    - Content has at least 5 reviews.
+  - There is no need for a CTE or subquery since the tables can be joined on content_id.
+- Solution:
+  ```
+  SELECT
+    c.title AS content_title,
+    YEAR(c.release_date) AS release_year,
+    AVG(r.rating) AS average_rating,
+    COUNT(r.review_id) AS number_of_reviews
+  FROM content AS c JOIN reviews_ntf AS r
+  ON c.content_id = r.content_id
+  GROUP BY c.title
+  HAVING AVG(r.rating) >= 4 AND COUNT(r.review_id) >= 5;
+  ```
+
+### Example 3 - Average Product Price by Gender and Price Tier (Beginner SQL DE Interview)
+For products with available stock above 100 and ordered after January 1, 2023, calculate the average price by gender. Additionally, label each average price as 'Premium' if it’s above 170, otherwise 'Affordable'. Round the average price to 2 decimal places.
+Output should contain: gender, avg_price, and price_tier.
+
+```
+Table Structure:
+
+Table: dim_product_nike
+entry_id
+gender
+product_name
+category_id
+price
+product_reviews
+comfort_score
+product_rating
+order_date
+
+Table: dim_category_nike
+category_id
+category_name
+available_color
+available_stocks
+```
+
+- Pseudocode:
+  - Calculate the average price by gender (grouping required).
+  - Label the average price as follows:
+    - Premium if > 170
+    - Affordable otherwise
+    - Round to 2 decimal places.
+  - Only perform the calculation for the following products:
+    - available stock > 100
+    - ordered after January 1, 2023
+  - Display gender, average price, and price tier.
+  - No CTE or subquery is required because average can be calculated using `GROUP BY`. You can also perform the conditional logic in the same query because `SELECT` is processed after the grouping.
+- Solution:
+  ```
+  SELECT
+    p.gender,
+    ROUND(AVG(p.price), 2) AS average_price,
+    (
+      CASE
+        WHEN AVG(p.price) > 170 THEN 'Premium'
+        ELSE 'Affordable'
+      END
+    ) AS price_tier
+  FROM dim_product_nike AS p JOIN dim_category_nike AS c
+  ON p.category_id = c.category_id
+  WHERE c.available_stocks > 100 AND p.order_date > '2023-01-01'
+  GROUP BY p.gender;
+  ```
+  - Don't forget the `GROUP BY` and `WHERE` at the end of your query. The grouping is required because we need to calculate the average price by gender.
+  - Also, don't forget that you can compare dates directly using Comparison Operators. There are no special functions required, as with date arithmetic.
+
+## Advice for Intermediate Problems
+### Example 1 - Most Video Views per Category (Intermediate SQL DE Interview)
+Fetch the first 3 youtubers from each category who have the most video views
+
+expected column: category, youtuber , video_views, rnk
+
+```
+Table Structure:
+
+Table: youtubers_table
+Youtuber_id
+youtuber
+subscribers
+video_views
+category
+started
+
+Table: dim_countries_youtube
+youtuber_id
+Country
+
+Table: dim_category_youtube
+category
+money_earned_per_1k_views
+```
+
+- Pseudocode:
+  - Fetch youtubers from each category.
+  - Only fetch those with the most video views.
+  - Of those only fetch the first 3.
+- Solution:
+  ```
+  SELECT
+    ranked_categories.category,
+    ranked_categories.youtuber,
+    ranked_categories.video_views,
+    ranked_categories.rnk
+  FROM (
+    SELECT
+      category,
+      youtuber,
+      video_views,
+      DENSE_RANK() OVER (PARTITION BY category ORDER BY video_views DESC) AS rnk
+    FROM youtubers_table
+  ) AS ranked_categories
+  WHERE ranked_categories.rnk <= 3;
+  ```
+  - A subquery was required here because we cannot limit the ranking to the top 3 in the same query where we do the ranking. `LIMIT` cannot be used with the `ORDER BY` in the `OVER` Clause.
+  - Solution with CTE:
+    ```
+    WITH ranked_categories AS (
+      SELECT
+        category,
+        youtuber,
+        video_views,
+        DENSE_RANK() OVER (PARTITION BY category ORDER BY video_views DESC) AS rnk
+      FROM youtubers_table
+    )
+
+    SELECT
+      ranked_categories.category,
+      ranked_categories.youtuber,
+      ranked_categories.video_views,
+      ranked_categories.rnk
+    FROM ranked_categories
+    WHERE ranked_categories.rnk <= 3;
+    ```
+
+### Example 2 - New Price Calculation (Intermediate SQL DE Interview)
+Find the price of each car at the time of sale. Display the two highest prices for each brand.
+Assume the start price is from January 2023 and all the cars were sold later that year.
+Columns to Display: brand, price
+
+```
+Table Structure:
+
+Table: dim_brands_tesla
+brand
+start_price
+monthly_inflation_rate
+square_footage
+
+Table: fact_sales_tesla
+VIN
+brand
+payment_method
+sale_date
+```
+
+- Pseudocode:
+  - Find the price of each car at the time of sale.
+  - Only display the two highest price cars for each brand.
+  - Assume the start price is from 01/2023 and all cars were sold after that.
+  - Display: brand, price. Only display for the two highest prices per brand.
+  - **In a real interview, ask the interviewer what the purpose of the monthly_inflation_rate column is.**
+  - In this case, we use a start date of '2023-01-01' and the sale_date to calculate the number of months. Then, use the monthly_inflation_rate to calculate the price increase, then add that to the start_price.
+- Solution:
+  ```
+  WITH prices AS (
+    SELECT
+      VIN,
+      f.brand,
+    TRUNCATE(start_price * POWER(1 + monthly_inflation_rate/100, MONTH(sale_date) - 1), 0) AS current_price
+    FROM fact_sales_tesla AS f JOIN dim_brands_tesla AS d ON f.brand = d.brand
+  )
+
+  SELECT
+    DISTINCT brand,
+    current_price 
+  FROM (
+    SELECT
+      *,
+      DENSE_RANK() OVER (PARTITION BY brand ORDER BY current_price DESC) AS rnk
+    FROM prices
+  ) AS brand_ranking
+  WHERE brand_ranking.rnk <= 2;
+  ```
+  - Here, `DISTINCT` ensures the final report only lists each unique qualifying price once per brand. It ensures unique brand-price pairs that qualify for the top 2 rankings. For example, if the dealership sold 5 Model S cars, they'd all probably have the same start price and current price based on the inflation rate. Using `DISTINCT` ensures that, after the table is filtered using `WHERE`, only unique brands are chosen for each rank of 1 and 2.
+  - Probably could have used another CTE instead of a subquery to calculate the ranking. That would have been more readable.
+
+### Example 3 - Frequently Restocked Products (Walmart FAANG)
+Find products that had stock replenished (quantity > 0) at least once between January and June 2023.
+
+Output: product_id, product_name, restock_count
+
+Tables: walmart_products, walmart_inventory_updates
+
+Table names are CASE SENSITIVE
+
+```
+Table Structure:
+
+Table: walmart_products
+ColumnName		Datatype
+product_id 		INT
+product_name 	VARCHAR
+category 	    VARCHAR
+price 			DECIMAL
+stock_count 	INT
+
+Table: walmart_inventory_updates
+ColumnName		Datatype
+update_id 	    INT
+product_id      INT
+update_date     DATE
+quantity_added  INT
+```
+
+- Pseudocode:
+  - Display product_id, product_name, restock_count.
+  - Only display for products that have had their stock replenished twice between 01/2023 and 06/2023
+- Solution:
+  ```
+  SELECT
+    p.product_id,
+    p.product_name,
+    COUNT(update_id) AS restock_count
+  FROM walmart_inventory_updates AS iu JOIN walmart_products AS p
+  ON iu.product_id = p.product_id
+  WHERE iu.update_date BETWEEN '2023-01-01' AND '2023-07-01' AND
+  iu.quantity_added > 0
+  GROUP BY product_id, product_name
+  HAVING COUNT(update_id) >= 1;
+  ```
+
+## Advice for Advanced Problems
+### Example 1 - High-Value Engaged Customers (Walmart FAANG)
+Find customers who meet both criteria:
+Total spent in 2023 > $1500
+At least 5 reviews in 2023 with avg rating ≥ 4
+
+Output: customer_name, total_spent, avg_rating, review_count
+
+Tables: walmart_customers, walmart_orders, walmart_reviews
+
+Table names are CASE SENSITIVE
+
+```
+Table Structure:
+
+Table: walmart_customers
+ColumnName		Datatype
+customer_id     INT
+customer_name 	VARCHAR
+email           VARCHAR
+join_date 	    DATE
+
+Table: walmart_orders
+ColumnName		Datatype
+order_id        INT
+store_id 	    INT
+customer_id     INT
+employee_id    	INT
+order_date 	    DATE
+total_amount 	DECIMAL
+
+Table: walmart_reviews
+ColumnName		Datatype
+review_id 		INT
+product_id 	    INT
+customer_id     INT
+rating         DECIMAL
+review_date 	DATE
+```
+
+- Pseudocode:
+  - Find customers who meet the following criteria:
+    - Spent more than $1500 in 2023.
+    - Left at least 5 reviews in 2023 with avg rating ≥ 4.
+  - Display customer_name, total_spent, avg_rating, review_count
+  - Need to calculate the total spend per customer in 2023.
+  - Need to calculate the average rating per customers who left at least 5 reviews.
+- Solution:
+  ```
+  WITH customer_review_stats AS (
+    SELECT
+      customer_id,
+      COUNT(review_id) AS review_count,
+      AVG(rating) AS avg_rating
+    FROM walmart_reviews
+    WHERE review_date BETWEEN '2023-01-01' AND '2024-01-01' -- You could also just use YEAR(review_date) = 2023
+    GROUP BY customer_id
+    HAVING COUNT(review_id) >= 5 AND AVG(rating) >= 4
+  ),
+  customer_spending_stats AS (
+    SELECT
+      customer_id,
+      SUM(total_amount) AS total_spent
+    FROM walmart_orders
+    WHERE order_date BETWEEN '2023-01-01' AND '2024-01-01' -- You could also just use YEAR(order_date) = 2023
+    GROUP BY customer_id
+    HAVING SUM(total_amount) > 1500
+  )
+
+  SELECT
+    customer_name,
+    total_spent,
+    avg_rating,
+    review_count
+  FROM customer_review_stats JOIN customer_spending_stats USING(customer_id)
+  JOIN walmart_customers USING(customer_id);
+  ```
+  - A good approach to solving problems like these, which have layers (i.e. total spend, then review count and average), is to use CTEs rather than joins or subqueries.
+  - In this case, the data can be prepared without joining the tables, so you should avoid doing so.
+  - For presentation purposes, it's also best to order the data by total_spent in descending order.
+
+### Example 2 - Year-Over-Year Sales Change (Advanced SQL DE Interview)
+Calculate the year-over-year (YoY) percent change in total Nike product sales.
+Return each year with the percentage change in sales compared to the previous year, rounded to 2 decimal points.
+If a previous year does not exist for comparison, return NULL.
+
+Columns to Display: order_year, percent_change
+
+```
+Table Structure:
+
+Table Name: dim_product_nike
+entry_id
+gender
+product_name
+category_id
+price
+product_reviews
+comfort_score
+product_rating
+order_date
+
+Table Name: dim_category_nike
+category_id
+category_name
+available_color
+available_stocks
+```
+
+- Pseudocode:
+  - Calculate the year-over-year change in total sales as a percentage.
+  - Display each year with the percentage change.
+  - Need to calculate the total sales per year.
+  - Need to calculate the percentage change.
+- Solution:
+```
+WITH yearly_sales_stats AS (
+  SELECT
+    YEAR(order_date) AS order_year,
+    SUM(price) AS total_product_sales
+  FROM dim_product_nike
+  GROUP BY YEAR(order_date)
+)
+
+SELECT
+  order_year,
+  ROUND((
+    total_product_sales - LAG(total_product_sales) OVER (ORDER BY order_year)) /
+    LAG(total_product_sales) OVER (ORDER BY order_year) * 100, 2
+  ) AS percent_change
+FROM yearly_sales_stats;
+```

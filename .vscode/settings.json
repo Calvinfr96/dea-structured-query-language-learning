@@ -9,6 +9,7 @@
     "DAYOFWEEK",
     "employeeid",
     "Equi",
+    "FAANG",
     "GETDATE",
     "IFNULL",
     "ISNULL",
@@ -26,6 +27,8 @@
     "RTRIM",
     "saleid",
     "Smyth",
-    "VARCHAR"
+    "VARCHAR",
+    "youtuber",
+    "youtubers"
   ]
 }
