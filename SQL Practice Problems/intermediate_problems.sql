@@ -365,3 +365,63 @@ SELECT
 FROM customers_prc AS c JOIN orders_prc AS o
 ON c.customerid = o.customer_id
 GROUP BY o.customer_id; -- Correct!
+
+/*
+  Bonus Problem: Expensive Service Analysis (Tesla SQL FAANG)
+
+  Write a query to identify vehicles with total service costs above the average across all vehicles, including a flag for high-capacity batteries (above 90 kWh).
+  
+  Table: tesla_vehicles
+  ColumnName		Datatype
+  vin				VARCHAR
+  customer_id		INT
+  model			VARCHAR
+  manufacture_date DATE
+  battery_capacity DECIMAL
+  color			VARCHAR
+  status			VARCHAR
+
+  Table: tesla_service_records
+  ColumnName		Datatype
+  service_id 		INT 
+  vin 			VARCHAR
+  service_date 	DATE 
+  description 	TEXT 
+  cost 			DECIMAL
+  technician_id 	INT
+*/
+
+WITH vehicle_stats AS (
+  SELECT
+    v.vin,
+    v.model,
+    SUM(sr.cost) AS total_service_cost,
+    (
+      CASE
+        WHEN v.battery_capacity <= 90 THEN 'Standard Capacity'
+        ELSE 'High Capacity'
+      END
+    ) AS battery_status
+  FROM tesla_vehicles AS v JOIN tesla_service_records AS sr
+  USING(vin)
+  GROUP BY 1
+),
+average_cost AS (
+  SELECT
+    AVG(total_service_cost) AS avg_service_cost
+  FROM vehicle_stats
+)
+
+SELECT
+  s.vin,
+  s.model,
+  s.total_service_cost,
+  ROUND(c.avg_service_cost, 2) AS avg_service_cost,
+  s.battery_status
+FROM vehicle_stats s CROSS JOIN average_cost c
+WHERE s.total_service_cost > c.avg_service_cost
+-- Note: This is a rare use case where cross join is useful.
+-- There was no other way to add the overall average alongside the service cost.
+-- Be very careful with cross joins, as they exponentially expand the result set.
+-- If you cross join two tables with 1000 rows, it will result in a table with 1,000,000 rows.
+-- Here we cross joined a table with 1 row (the overall average) with a table with n rows, resulting in n rows.
