@@ -36,6 +36,41 @@
     - Available Functions: `CURRENT_DATE`, `INTERVAL`, `DATE_SUB`, etc.
   - Day of Week Logic: Weekend, Weekday, etc.
     - Available Functions: `DAYOFWEEK`, `WEEKDAY`, etc.
+- Trends and Comparisons:
+  - Compare Two Time Periods: Increased, Decreased, Change, Growth, etc.
+    - Available Functions: `LEAD`, `LAG`, `SELF JOIN`, etc.
+  - Compare Same Metric Over Time Period: "Year over year", "Month over month", etc.
+    - Available Functions: `DAY`, `YEAR`, `MONTH`, `SELF JOIN`, etc.
+  - Absolute or Directional Difference: "Biggest change", etc.
+    - Available Functions: `ABS`, `LEAD`, `LAG`, `MAX`, etc.
+- Time Based or Sequence Analysis:
+  - Compare Rows Over Time: Consecutive, Previous, Next, etc.
+    - Available Functions: `LEAD`, `LAG`, `ROW_NUMBER`, `DATEDIFF`, etc.
+  - Identify Top/Bottom Records Per Group: First, Last, Latest, Earliest, etc.
+    - Available Functions: `ROW_NUMBER`, `RANK`, `MIN`, `MAX`, `GROUP BY`, `ORDER BY`, `LIMIT`, etc.
+  - Track Values Across Events: "Over time", "Change over time", etc.
+    - Available Functions: `LEAD`, `LAG`, `DATEDIFF`, etc. (Window functions will generally help here)
+  - Difference Between Rows: "Difference between orders", etc.
+    - Available Functions: `LEAD`, `LAG`, etc.
+- Unions and Self Joins:
+  - Merge Results From Multiple Queries: "Combine results from", etc.
+    - Available Functions: `UNION`, `UNION ALL`, etc.
+  - Add Rows From Different Sources: "Include both", "Either", "Or", etc.
+    - Available Functions: `UNION`, etc.
+  - Append Two Datasets Vertically: "List all X and all Y", etc.
+    - Available Functions: `UNION`, etc.
+  - Join Results From Two Tables in the Same Column: "From multiple sources", etc.
+    - Available Functions: `UNION`, etc.
+  - Compare Two Entries in the Same Table: "Compare a row to another row", etc.
+    - Available Functions: `SELF JOIN`, etc.
+  - Relate One Record to Another in the Same Table: Previous, Next, Consecutive, etc.
+    - Available Functions: `SELF JOIN`, `LEAD`, `LAG`, etc.
+  - Compare Two Time Points for the Same Entity: Before, After, etc.
+    - Available Functions: `SELF JOIN`, etc.
+  - Create Combinations of Related Rows in the Same Table: "Pair of records", etc.
+    - Available Functions: `SELF JOIN`, etc.
+  - Relate Two Instances of the Same Entity: "Same customer/product with different dates/values", etc.
+    - Available Functions: `SELF JOIN`, etc.
 
 ## Advice for Beginner Problems (Can Apply to Any Problem Type)
 - Determine what the question is asking and what resources have been provided to solve the problem.
