@@ -71,6 +71,8 @@
     - Available Functions: `SELF JOIN`, etc.
   - Relate Two Instances of the Same Entity: "Same customer/product with different dates/values", etc.
     - Available Functions: `SELF JOIN`, etc.
+  - Include Cumulative Average Alongside Individual Averages: "Include overall average alongside individual stats"
+    - Available Functions: `CROSS JOIN`, `WITH`, etc. (**Use caution with cross joins**)
 
 ## Advice for Beginner Problems (Can Apply to Any Problem Type)
 - Determine what the question is asking and what resources have been provided to solve the problem.
