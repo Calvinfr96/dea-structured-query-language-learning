@@ -242,6 +242,20 @@ available_stocks
   - Also, don't forget that you can compare dates directly using Comparison Operators. There are no special functions required, as with date arithmetic.
 
 ## Advice for Intermediate Problems
+- **Make sure you're speaking out loud about how you're solving the problem the whole time.**
+- Spend the first 5 minutes reading the problem and really breaking it down. This will help you solve the problem more quickly.
+- Especially make sure you clarify with the interviewer anything that's not clear about the question.
+- In a typical interview, you will be given 20 - 30 minutes to solve an SQL question.
+- You won't be penalized for getting a "wrong" answer at first, as long as you can work through it and eventually get the right answer.
+- In your pseudocode, breakdown your general understanding of the problem and its requirements. Also breakdown how you will go about solving it.
+- There will typically be two interview scenarios for how you will receive data for an interview question:
+  - Database: In this scenario, there is coding portal with a database attached to the background.
+    - In this scenario, the first thing you should do is examine the data by running a general `SELECT * FROM LIMIT` query.
+    - After writing your pseudocode, make sure you iteratively run your code as you develop your solution to check for errors.
+    - **Try to use subqueries over CTEs where it makes sense.**
+  - Virtual Whiteboard: In this scenario, there won't be any database (mimics what a real, in-person interview used to be like).
+    - The code probably won't actually work here, so just focus on writing the code without worrying too much about syntax. Do make sure your code is properly formatted though.
+
 ### Example 1 - Most Video Views per Category (Intermediate SQL DE Interview)
 Fetch the first 3 youtubers from each category who have the most video views
 
@@ -406,7 +420,66 @@ quantity_added  INT
   HAVING COUNT(update_id) >= 1;
   ```
 
+### Example 4 - Last post from top publisher (Intermediate SQL DE Interview)
+Find the name and the content of the last post published by the top publisher (who has the most posts). 
+Columns to Display: name, content
+
+```
+Table Structure:
+
+Table: dim_publishers_reddit
+publisher_id
+name
+city
+
+Table: fact_reddit
+post_id
+publisher_id
+comm_num
+score
+creation_date
+content
+```
+
+- Pseudocode
+  - Find the name and content of the last post for the top publisher.
+  - Top publisher means the one with the most posts.
+  - Display: name, content (LAST post).
+- Solution:
+  ```
+  WITH publisher_stats AS (
+    SELECT
+      p.Publisher_id,
+      p.Name,
+      COUNT(f.Post_id) num_posts
+    FROM dim_publishers_reddit p JOIN fact_reddit f
+    USING(Publisher_id)
+    GROUP BY p.Publisher_id, p.Name
+    ORDER BY num_posts DESC
+  ),
+  post_stats AS (
+    SELECT
+      s.Publisher_id,
+      s.Name,
+      s.num_posts,
+      RANK() OVER (ORDER BY s.num_posts DESC) AS publisher_rnk,
+      RANK() OVER (PARTITION BY f.Publisher_id ORDER BY f.Creation_date DESC) AS post_date_rnk,
+      f.Content
+    FROM publisher_stats s JOIN fact_reddit f
+    USING(Publisher_id)
+    ORDER BY s.num_posts DESC
+  )
+
+  SELECT
+      DISTINCT Name, Content
+  FROM post_stats
+  WHERE publisher_rnk = 1 AND post_date_rnk = 1;
+  ```
+
 ## Advice for Advanced Problems
+- Spend the first 5 minutes breaking down the quest, 5 more minutes talking with the interview and clarifying anything that's confusing, then the rest of the time actually solving the problem.
+- Especially clarify how the final output should look like.
+
 ### Example 1 - High-Value Engaged Customers (Walmart FAANG)
 Find customers who meet both criteria:
 Total spent in 2023 > $1500
@@ -538,3 +611,68 @@ SELECT
   ) AS percent_change
 FROM yearly_sales_stats;
 ```
+
+### Example 3 - Cumulative Balance (Advanced SQL DE Interview)
+Find the cumulative balance over transactions of the account owned by 'James Thompson'.
+Columns to Display: Output the transaction dates and cumulative balances - columns should be: name, transaction_date, transaction_amount, cumulative_balance
+
+```
+Table Structure:
+
+Table: dim_accounts_paypal
+account_id
+name
+city
+balance
+
+Table: fact_transactions_paypal
+transaction_id
+payer_id
+receiver_id
+amount
+transaction_date
+```
+
+- Pseudocode:
+  - Filter table down to transactions for James Thompson's account.
+  - Find the cumulative balance over transactions for this account.
+  - Clarify with interviewer whether this means over time.
+  - Clarify with interviewer if account_id = payer_id
+  - Display: name, transaction_date, transaction_amount, cumulative_balance
+  - Join the tables based on payer/receiver id.
+  - Filter based on account name to get James Thompson's transactions.
+  - Based on transaction date, find the current balance, previous balance, and amount
+  - Use these columns to find the cumulative transaction total.
+  - Use the initial balance and cumulative transaction total to find the cumulative balance.
+- Solution:
+  ```
+  WITH cumulative_transactions AS (
+    SELECT
+      a.name,
+      t.transaction_date,
+      a.balance,
+      (
+        CASE
+          WHEN a.account_id = t.payer_id THEN -1 * t.amount
+          ELSE t.amount
+        END
+      ) AS transaction_amount,
+      SUM(
+        CASE
+          WHEN a.account_id = t.payer_id THEN -1 * t.amount
+          ELSE t.amount
+        END
+      ) OVER (ORDER BY t.transaction_date) AS transaction_total
+    FROM fact_transactions_paypal t JOIN dim_accounts_paypal a
+    ON a.account_id = t.payer_id OR a.account_id = t.receiver_id
+    WHERE a.name = 'James Thompson'
+    ORDER BY t.transaction_date
+  )
+
+  SELECT
+    name,
+    transaction_date,
+    transaction_amount,
+    (balance + transaction_total) AS cumulative_balance
+  FROM cumulative_transactions;
+  ```
