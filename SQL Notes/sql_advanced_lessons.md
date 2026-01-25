@@ -710,11 +710,11 @@ SELECT CASE WHEN LENGTH(username) > 15 THEN LEFT(username, 15) + '...' ELSE user
   ```
   - The `OVER` Clause defines the "window" or set of related rows within a query result set on which a calculation is performed. **Unlike the `GROUP BY` Clause, it performs calculations without collapsing the individual rows of the result.** This is beneficial because it allows aggregate or ranking information to be displayed alongside individual row details.
   - The `PARTITION BY` Clause divides the query result set into partitions (groups of rows) to which the window function is **independently applied** (applied to each row in the table). The function calculation resets when the partition boundary is crossed. The entire result set (up to the current row in the table) is treated as a default partition when omitted.
-    - The default window frame for for a window function (when no partition is specified) **with `ORDER BY`** is as follows: `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`. This goes from the first row of the partition up to and including the current row.
-    - The default window frame for for a window function (when no partition is specified) **without `ORDER BY`** is as follows: `RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`. This includes all rows in the partition.
+    - The default window frame for a window function (when no partition is specified) **with `ORDER BY`** is as follows: `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`. This goes from the first row of the partition up to and including the current row.
+    - The default window frame for a window function (when no partition is specified) **without `ORDER BY`** is as follows: `RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`. This includes all rows in the partition.
     - **Note: The _partition_ for the window function is the entire result set by default, but the _window frame_ is as explained above.**
   - The `ORDER BY` Clause defines the logical order of rows within each partition. **This does not affect the final order of the query output**; a separate ORDER BY must be used at the end of the SQL query for that.
-  - The `ROWS` or `RANGE` Clauses further limits the rows within a partition that constitute the _window frame_ for the current row's calculation, based on physical row position (`ROWS`) or logical value range (`RANGE`). For example, `ROWS BETWEEN 1 PRECEDING AND CURRENT ROW` would sum values from the previous row and the current row.
+  - The `ROWS` or `RANGE` Clauses further limits the rows within a partition that constitute the _window frame_ for the current row's calculation, based on physical row position (`ROWS`) or logical value range (`RANGE`). For example, `ROWS BETWEEN 1 PRECEDING AND CURRENT ROW` would sum values from the previous row up to and including the current row.
     - The primary difference between `ROWS` and `RANGE` is whether the frame is determined by physical row position or logical value range.
     - The `ROWS` clause treats every row as a distinct entity based on its position in the sorted list, regardless of its actual value. In other words, it counts exactly the number of rows you specify.
     - It is ideal, for example, when you need to calculate strict moving averages or sums, where the value increases row-by-row, even if there are rows with duplicate values.
@@ -899,7 +899,7 @@ SELECT CASE WHEN LENGTH(username) > 15 THEN LEFT(username, 15) + '...' ELSE user
   ```
   LEAD(column, offset, default_value) OVER (ORDER BY order_expression);
   ```
-  - The offset parameter is used to specify how many hows ahead to look for the row that should be returned. When not specified, the function uses a default value of 0.
+  - The offset parameter is used to specify how many hows ahead to look for the row that should be returned. When not specified, the function uses a default value of 1.
   - The default_value parameter determines the value if there is no subsequent value. When not specified, the function returns null.
   - `ORDER BY` is required in the `OVER` Clause while `PARTITION BY` is optional and divides the rows into groups.
 - Common Use Cases:
@@ -939,7 +939,7 @@ SELECT CASE WHEN LENGTH(username) > 15 THEN LEFT(username, 15) + '...' ELSE user
   ```
   LAG(column, offset, default_value) OVER (ORDER BY order_expression);
   ```
-  - The offset parameter is used to specify how many hows behind to look for the row that should be returned. When not specified, the function uses a default value of 0.
+  - The offset parameter is used to specify how many hows behind to look for the row that should be returned. When not specified, the function uses a default value of 1.
   - The default_value parameter determines the value if there is no preceding value. When not specified, the function returns null.
   - `ORDER BY` is required in the `OVER` Clause while `PARTITION BY` is optional and divides the rows into groups.
 - Common Use Cases:
