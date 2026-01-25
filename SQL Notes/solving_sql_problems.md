@@ -255,6 +255,7 @@ available_stocks
     - **Try to use subqueries over CTEs where it makes sense.**
   - Virtual Whiteboard: In this scenario, there won't be any database (mimics what a real, in-person interview used to be like).
     - The code probably won't actually work here, so just focus on writing the code without worrying too much about syntax. Do make sure your code is properly formatted though.
+    - When not given an actual table to look at, try to use comments to mock what the table and associated data would look like as you solve the problem to help make things more clear.
 
 ### Example 1 - Most Video Views per Category (Intermediate SQL DE Interview)
 Fetch the first 3 youtubers from each category who have the most video views
@@ -479,6 +480,14 @@ content
 ## Advice for Advanced Problems
 - Spend the first 5 minutes breaking down the quest, 5 more minutes talking with the interview and clarifying anything that's confusing, then the rest of the time actually solving the problem.
 - Especially clarify how the final output should look like.
+- Think about and discuss any edge cases.
+- In a real interview, you will typically be given a mix of easy, medium, and hard problems. Try to complete the easy and medium problems quickly to save more time for the advanced question.
+- Advanced questions will typically require the use of CTEs and window functions.
+- When writing pseudocode, break down your approach into logical steps. When writing code, tell the interviewer which step you're working on so you don't go completely silent.
+- **After finishing your solution, go back to the question to make sure you've covered all of the requirements.**
+- There will typically be 5 interview rounds for a job: SQL, Data Modeling, Behavioral, System Design (AWS), and Python. Out of these 5, the first 3 will be the easiest.
+- You typically need to pass 3.5 to 4 rounds to get the job, so getting a really good grasp of SQL, Data Modeling, and Behavioral Questions is the best strategy.
+- **Communicating and understanding the business problem during the interview is more important than specific syntax and function knowledge for SQL interview rounds.**
 
 ### Example 1 - High-Value Engaged Customers (Walmart FAANG)
 Find customers who meet both criteria:
