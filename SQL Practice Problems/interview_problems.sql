@@ -146,21 +146,21 @@ SELECT * FROM stage_2 WHERE rnk <= 3;
 
 
 /*
-Wrong Confirmations (Advanced SQL DE Interview Problem)
+  Wrong Confirmations (Advanced SQL DE Interview Problem)
 
-Find the participants who were confirmed in overlapping meetings and also in at least two non-overlapping meetings, and return their participant ID along with the count of their overlapping meetings.
-Columns to Display: participant_id , overlapped_meeting_count
+  Find the participants who were confirmed in overlapping meetings and also in at least two non-overlapping meetings, and return their participant ID along with the count of their overlapping meetings.
+  Columns to Display: participant_id , overlapped_meeting_count
 
-Table: fact_participations_zoom
-meeting_id
-participant_id
-status
+  Table: fact_participations_zoom
+  meeting_id
+  participant_id
+  status
 
-Table: dim_meetings_zoom
-meeting_id
-organizer_id
-start_timestamp
-end_timestamp
+  Table: dim_meetings_zoom
+  meeting_id
+  organizer_id
+  start_timestamp
+  end_timestamp
 */
 
 -- Find participants who were confirmed in overlapping meetings.
@@ -230,3 +230,96 @@ SELECT -- Step 5
 FROM overlapping_meeting_count omc JOIN non_overlapping_meeting_count nomc
 ON omc.participant_id = nomc.participant_id;
 -- For Step 4, we probably could have done a self join similar to what was done in Step 2, but it would've been more complicated.
+
+
+/*
+  Ascending Responsiveness Rate (Advanced SQL DE Interview Problem)
+
+  Find the users who have logged in for at least 5 months, and who have a strictly increasing monthly responsiveness rate* through the months
+  Columns to Display: user_id, month, current_month_responsiveness, previous_month_responsiveness
+
+  Table: dim_users_hinge
+  user_id
+  gender
+  city
+
+  Table: fact_logins_hinge
+  login_id
+  user_id
+  login_date
+  messages_sent
+  replies
+*/
+
+-- Find users who meet the following conditions:
+    -- Logged in for at least 5 months
+    -- Has a strictly increasing average responsiveness rate.
+-- Display: user_id, month, current_month_responsiveness,
+-- previous_month_responsiveness
+-- Step 1: Join the tables using INNER JOIN
+-- Step 2: Group by user ID and month
+-- Step 3: Calculate the average responsive rate.
+-- Step 4: Filter down to users who have logged in for >= 5 months
+-- Step 5: Filter down to users with strictly increasing response rate
+
+WITH monthly_stats AS ( -- Step 1, 2, and 3
+    SELECT
+        duh.user_id,
+        DATE_FORMAT(login_date, '%Y-%m') AS month_key,
+        SUM(flh.replies) * 1.0 / SUM(flh.messages_sent) AS current_month_responsiveness
+    FROM dim_users_hinge duh
+    JOIN fact_logins_hinge flh
+        ON duh.user_id = flh.user_id
+    GROUP BY duh.user_id, DATE_FORMAT(login_date, '%Y-%m')
+),
+filtered_monthly_stats AS ( -- Step 4
+    SELECT
+        user_id,
+        month_key,
+        current_month_responsiveness,
+        LAG(current_month_responsiveness) OVER(PARTITION BY user_id ORDER BY month_key) AS previous_month_responsiveness
+    FROM monthly_stats t1
+    WHERE (
+        SELECT
+            COUNT(month_key)
+        FROM monthly_stats t2
+        WHERE t1.user_id = t2.user_id
+        GROUP BY t2.user_id
+    ) >= 5
+),
+increasing_rates AS (
+    SELECT
+        user_id,
+        month_key,
+        current_month_responsiveness,
+        previous_month_responsiveness,
+        (
+            CASE
+                WHEN previous_month_responsiveness IS NULL THEN 1
+                WHEN previous_month_responsiveness < current_month_responsiveness THEN 1
+                ELSE 0
+            END
+        ) AS increasing_rate
+    FROM filtered_monthly_stats
+),
+qualified_users AS (
+    SELECT
+        user_id
+    FROM increasing_rates
+    GROUP BY user_id
+    HAVING COUNT(month_key) = SUM(increasing_rate)
+)
+
+SELECT -- Step 5
+   user_id,
+   SUBSTRING(month_key, 6, 2) AS month,
+   current_month_responsiveness,
+   previous_month_responsiveness
+FROM filtered_monthly_stats
+WHERE user_id IN (
+    SELECT * FROM qualified_users
+);
+-- This problem serves as a good example of how to determine a strictly increasing value in a particular column or partition within a column.
+-- Simply use the LAG function to create a increasing_value column. For the first row in the column/partition, default to a 1 (true) since there's
+-- no previous value to compare it to. For other rows, compare the current row to the previous and assign a value of 1 or 0 accordingly.
+-- For a strictly increasing column/partition, COUNT(*) = SUM(increasing_value)
