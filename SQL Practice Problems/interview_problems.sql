@@ -143,3 +143,90 @@ SELECT * FROM stage_2 WHERE rnk <= 3;
 -- For statements like "find the top 3 users (by total plays) in each genre", further break it down into logical steps:
 --    First, we found the total plays per genre for all users, then we ranked the users based on that and found the top 3.
 --    The statement asks you to find the top total_plays per user in each genre, that's the signal indicating you'd need to group using more than 1 parameter.
+
+
+/*
+Wrong Confirmations (Advanced SQL DE Interview Problem)
+
+Find the participants who were confirmed in overlapping meetings and also in at least two non-overlapping meetings, and return their participant ID along with the count of their overlapping meetings.
+Columns to Display: participant_id , overlapped_meeting_count
+
+Table: fact_participations_zoom
+meeting_id
+participant_id
+status
+
+Table: dim_meetings_zoom
+meeting_id
+organizer_id
+start_timestamp
+end_timestamp
+*/
+
+-- Find participants who were confirmed in overlapping meetings.
+-- These participants should also be confirmed in >= 2 non-overlapping
+-- meetings.
+-- Display: participant_id , overlapped_meeting_count
+-- Step 1: Get all confirmed meetings with start/end times for all participants.
+-- Step 2: Identify every unique meeting_id that is involved in at least one overlap 
+-- with another confirmed meeting for the same participant.
+-- Step 3: Count the total unique meetings involved in an overlap per participant 
+-- (This satisfies the first requirement, provided the participant has at least one
+-- overlap).
+-- Step 4: Identify participants with at least two meetings that are NOT involved
+-- in any overlap.
+-- Step 5: Final result - Join the two filtered lists to get participants who satisfy
+-- BOTH conditions.
+
+-- SELECT * FROM dim_meetings_zoom LIMIT 20;
+
+WITH confirmed_meetings AS ( -- Step 1
+    SELECT
+        fpz.participant_id,
+        dmz.meeting_id,
+        dmz.start_timestamp,
+        dmz.end_timestamp
+    FROM dim_meetings_zoom dmz JOIN fact_participations_zoom fpz
+    ON dmz.meeting_id = fpz.meeting_id
+    WHERE fpz.status = 'Confirmed'
+),
+overlapping_meetings AS ( -- Step 2
+    SELECT
+        cm1.participant_id,
+        cm1.meeting_id AS meeting_id_1,
+        cm2.meeting_id AS meeting_id_2
+    FROM confirmed_meetings cm1 JOIN confirmed_meetings cm2
+    ON cm1.participant_id = cm2.participant_id
+    AND cm1.meeting_id < cm2.meeting_id
+    WHERE cm1.start_timestamp  < cm2.end_timestamp
+    AND cm2.start_timestamp < cm1.end_timestamp
+),
+overlapping_meeting_count AS ( -- Step 3
+    SELECT
+        participant_id,
+        COUNT(DISTINCT meeting_id_1) +
+        COUNT(DISTINCT meeting_id_2) AS overlap_count
+    FROM overlapping_meetings
+    GROUP BY participant_id
+),
+non_overlapping_meeting_count AS ( -- Step 4
+    SELECT
+        cm.participant_id,
+        COUNT(DISTINCT cm.meeting_id) AS non_overlap_count
+    FROM confirmed_meetings cm LEFT JOIN overlapping_meetings om
+    ON cm.participant_id = om.participant_id
+    AND (
+        cm.meeting_id = om.meeting_id_1
+        OR cm.meeting_id = om.meeting_id_2
+    )
+    WHERE om.participant_id IS NULL
+    GROUP BY cm.participant_id
+    HAVING COUNT(DISTINCT cm.meeting_id) >= 2
+)
+
+SELECT -- Step 5
+    omc.participant_id,
+    omc.overlap_count
+FROM overlapping_meeting_count omc JOIN non_overlapping_meeting_count nomc
+ON omc.participant_id = nomc.participant_id;
+-- For Step 4, we probably could have done a self join similar to what was done in Step 2, but it would've been more complicated.
