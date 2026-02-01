@@ -454,3 +454,76 @@ FROM space_requirements
 -- Good example of a problem that was seemingly simple, but was more complicated when you look at making the code extensible to different scenarios.
 -- Seemed like a simple algebra question more than an SQL question, but ended up being more complicated. Exemplifies the use of the LEAST and GREATEST
 -- functions, which return the lowest and highest value among the parameters listed.
+
+
+/*
+  Most Sold Products (Advanced SQL DE Interview Problem)
+
+  List Top two Product which has been most sold each month, only completed orders should be considered.
+  Columns to Display: year_month, product description , units sold
+
+  Table: shopify_customer
+  customer_id
+  customer_name
+  city
+  country
+  zip_code
+  telephone
+  email
+  gender
+  age
+  subscription_type
+
+  Table: shopify_order_history
+  order_id
+  customer_id
+  product_id
+  units
+  order_time
+  order_status
+
+  Table: shopify_product
+  product_id
+  description
+  unit_price
+*/
+
+-- List the top two most-sold products each month, only considering
+-- completed orders.
+-- Display: year_month, product description , units sold
+-- Step 1: Join the tables and filter down to completed orders.
+-- Step 2: Four each year-month, find the total units sold per product.
+-- Step 3: Rank each product for each month.
+-- Step 4: List the products ranked number one.
+
+-- SELECT * FROM shopify_product LIMIT 20;
+
+WITH monthly_product_sales AS (
+    SELECT
+        sp.description,
+        DATE_FORMAT(soh.order_time, '%Y-%m') AS formatted_date,
+        SUM(units) AS units_sold
+    FROM shopify_order_history soh
+    JOIN shopify_product sp
+        ON soh.product_id = sp.product_id
+    WHERE soh.order_status = 'Completed'
+    GROUP BY sp.description, DATE_FORMAT(soh.order_time, '%Y-%m')
+),
+ranked_products AS (
+    SELECT
+        description,
+        formatted_date,
+        units_sold,
+        ROW_NUMBER() OVER (PARTITION BY formatted_date ORDER BY units_sold DESC) AS rnk
+    FROM monthly_product_sales
+)
+
+SELECT
+    formatted_date,
+    description,
+    units_sold
+FROM ranked_products
+WHERE rnk <= 2
+-- Ran into trouble with getting total units per product per month because we were also grouping by product ID. *Only group rows by what is necessary.*
+-- Also ran into trouble with ranking because we were using RANK instead of ROW_NUMBER. *Only use RANK or DENSE_RANK if the question asks you to account for ties.*
+-- You could also use 'Concat(Year(order_time), "-", Month(order_time))' to get the year-month combination, instead of DATE_FORMAT
