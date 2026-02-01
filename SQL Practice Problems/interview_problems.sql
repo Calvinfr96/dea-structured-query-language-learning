@@ -266,7 +266,7 @@ WITH monthly_stats AS ( -- Step 1, 2, and 3
     SELECT
         duh.user_id,
         DATE_FORMAT(login_date, '%Y-%m') AS month_key,
-        SUM(flh.replies) * 1.0 / SUM(flh.messages_sent) AS current_month_responsiveness
+        SUM(flh.replies) * 1.0 / SUM(flh.messages_sent) AS current_month_responsiveness -- Multiplying by 1.0 avoids integer division
     FROM dim_users_hinge duh
     JOIN fact_logins_hinge flh
         ON duh.user_id = flh.user_id
@@ -328,8 +328,9 @@ WHERE user_id IN (
 /*
   Four Consecutive Days of Listening (Advanced SQL DE Interview Problem)
 
-  Find the users who have logged in for at least 5 months, and who have a strictly increasing monthly responsiveness rate* through the months
-  Columns to Display: user_id, month, current_month_responsiveness, previous_month_responsiveness
+  Identify the names of users who listened to songs on four consecutive days.
+  Use data from recent weekly listens only.
+  Columns to Display: name
 
   Table: dim_users_spotify
   user_id
@@ -398,3 +399,58 @@ WHERE user_id IN (
     HAVING SUM(is_consecutive_listen) >= 1
 );
 -- Good example of how to look back four consecutive days without using a self join, showing that window functions can be a good alternative.
+
+
+/*
+  Shipping Strategy (Advanced SQL DE Interview Problem)
+
+  Tesla delivers cars, whose brands are ‘model X’ and ‘model S’, on large 60,000-square-foot ships. Since ‘model X’ has priority, Tesla ships as many ‘model X’ cars as possible and then uses the remaining square footage to ship the most number of ‘model S’ cars.
+  Find the number of ‘model X’ and ‘model S’ cars that can be shipped on a 60,000-square-foot ship. 
+  Columns to Display: brand, the number of cars to be shipped.
+
+  Table: dim_brands_tesla
+  brand
+  start_pice
+  monthly_inflation_rate
+  square_footage
+
+  Table: fact_sales_tesla
+  VIN
+  brand
+  payment_method
+  sale_date
+*/
+
+-- Find the number of Model X and Model S cars that can be shipped
+-- on a 60000 sqft ship.
+-- Note: Model X takes priority over Model S. Once all Model x vehicles
+-- are onboarded, remaining space, if available, will be used for Model S
+-- Display: brand, model_count
+-- Step 1: Get the the total required storage space for each brand.
+-- Step 2: Determine if there is any remaining space left for Model S.
+-- Step 3: Use the remaining space to calculate the model count.
+
+WITH space_requirements AS (
+    SELECT
+        dbt.brand,
+        dbt.square_footage,
+        dbt.square_footage * COUNT(fsl.vin) AS total_space_required
+    FROM dim_brands_tesla dbt JOIN fact_sales_tesla fsl
+    ON dbt.brand = fsl.brand
+    WHERE dbt.brand IN('Model X', 'Model S')
+    GROUP BY dbt.brand, dbt.square_footage
+)
+
+SELECT
+    brand,
+    (
+        CASE
+            WHEN brand = 'Model X' THEN FLOOR(LEAST(total_space_required, 60000) / square_footage)
+            WHEN brand = 'Model S' THEN FLOOR(GREATEST(60000 - (SELECT total_space_required FROM space_requirements WHERE brand = 'Model X'), 0) / square_footage)
+            ELSE 0
+        END
+    ) AS model_count
+FROM space_requirements
+-- Good example of a problem that was seemingly simple, but was more complicated when you look at making the code extensible to different scenarios.
+-- Seemed like a simple algebra question more than an SQL question, but ended up being more complicated. Exemplifies the use of the LEAST and GREATEST
+-- functions, which return the lowest and highest value among the parameters listed.
