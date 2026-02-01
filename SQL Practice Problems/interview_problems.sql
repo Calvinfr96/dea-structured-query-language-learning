@@ -527,3 +527,187 @@ WHERE rnk <= 2
 -- Ran into trouble with getting total units per product per month because we were also grouping by product ID. *Only group rows by what is necessary.*
 -- Also ran into trouble with ranking because we were using RANK instead of ROW_NUMBER. *Only use RANK or DENSE_RANK if the question asks you to account for ties.*
 -- You could also use 'Concat(Year(order_time), "-", Month(order_time))' to get the year-month combination, instead of DATE_FORMAT
+
+
+/*
+  Top & Bottom Categories by Gender and Year (Advanced SQL DE Interview Problem)
+
+  For each year, identify the top and bottom categories (based on average product reviews) for both men and women.
+  Only include products where gender is 'Male' or 'Female'.
+  Columns to Display: order_year, men_top_category, men_bottom_category, women_top_category, women_bottom_category.
+  Use AVG(product_reviews) as the ranking metric.
+
+  Table: shopify_customer
+  entry_id
+  gender
+  product_name
+  category_id
+  price
+  product_reviews
+  comfort_score
+  product_rating
+  order_date
+
+  Table: shopify_order_history
+  category_id
+  category_name
+  available_color
+  available_stocks
+*/
+
+-- Identify the top and bottom categories for each year based on average
+-- product reviews for both men and women.
+-- Only include products where the gender is Male for Female
+-- Display: order_year, men_top_category, men_bottom_category,
+-- women_top_category, women_bottom_category
+-- Step 1: Join the tables and filter down to Male and Female products.
+-- Step 2: Group by category, gender, and year, then find the average review count for each.
+-- Step 3: Rank categories for each year by average review count.
+-- Step 4: Identify the categories with the lowest and highest rank.
+
+-- SELECT * FROM dim_product_nike LIMIT 25;
+
+WITH category_stats AS (
+    SELECT
+        dcn.category_name,
+        dpn.gender,
+        YEAR(order_date) AS order_year,
+        AVG(product_reviews) AS avg_review_count
+    FROM dim_product_nike dpn JOIN dim_category_nike dcn
+    ON dpn.category_id = dcn.category_id
+    WHERE dpn.gender IN ('Male', 'Female')
+    GROUP BY dcn.category_name, dpn.gender, YEAR(order_date)
+),
+ranked_categories AS (
+    SELECT
+        category_name,
+        gender,
+        order_year,
+        avg_review_count,
+        ROW_NUMBER() OVER(PARTITION BY order_year, gender ORDER BY avg_review_count DESC) AS rnk
+    FROM category_stats
+),
+men_top_categories AS (
+    SELECT
+        order_year,
+        category_name AS men_top_category
+    FROM ranked_categories t1
+    WHERE gender = 'Male' AND rnk = (
+        SELECT
+            MIN(rnk)
+        FROM ranked_categories t2
+        WHERE t1.order_year = t2.order_year AND gender = 'Male'
+    )
+),
+women_top_categories AS (
+    SELECT
+        order_year,
+        category_name AS women_top_category
+    FROM ranked_categories t1
+    WHERE gender = 'Female' AND rnk = (
+        SELECT
+            MIN(rnk)
+        FROM ranked_categories t2
+        WHERE t1.order_year = t2.order_year AND gender = 'Female'
+    )
+),
+men_bottom_categories AS (
+    SELECT
+        order_year,
+        category_name AS men_bottom_category
+    FROM ranked_categories t1
+    WHERE gender = 'Male' AND rnk = (
+        SELECT
+            MAX(rnk)
+        FROM ranked_categories t2
+        WHERE t1.order_year = t2.order_year AND gender = 'Male'
+    )
+),
+women_bottom_categories AS (
+    SELECT
+        order_year,
+        category_name AS women_bottom_category
+    FROM ranked_categories t1
+    WHERE gender = 'Female' AND rnk = (
+        SELECT
+            MAX(rnk)
+        FROM ranked_categories t2
+        WHERE t1.order_year = t2.order_year AND gender = 'Female'
+    )
+)
+
+SELECT
+    order_year,
+    men_top_category,
+    men_bottom_category,
+    women_top_category,
+    women_bottom_category
+FROM men_top_categories
+JOIN men_bottom_categories
+    USING(order_year)
+JOIN women_top_categories
+    USING(order_year)
+JOIN women_bottom_categories
+    USING(order_year);
+
+-- **Alternative Solution that avoids the extra CTEs and joining:**
+
+-- Identify the top and bottom categories for each year based on average
+-- product reviews for both men and women.
+-- Only include products where the gender is Male for Female
+-- Display: order_year, men_top_category, men_bottom_category,
+-- women_top_category, women_bottom_category
+-- Step 1: Join the tables and filter down to Male and Female products.
+-- Step 2: Group by category, gender, and year, then find the average review count for each.
+-- Step 3: Rank categories for each year by average review count.
+-- Step 4: Identify the categories with the lowest and highest rank.
+
+-- SELECT * FROM dim_product_nike LIMIT 25;
+
+WITH category_stats AS (
+    SELECT
+        dcn.category_name,
+        dpn.gender,
+        YEAR(order_date) AS order_year,
+        AVG(product_reviews) AS avg_review_count
+    FROM dim_product_nike dpn JOIN dim_category_nike dcn
+    ON dpn.category_id = dcn.category_id
+    WHERE dpn.gender IN ('Male', 'Female')
+    GROUP BY dcn.category_name, dpn.gender, YEAR(order_date)
+),
+ranked_categories AS (
+    SELECT
+        category_name,
+        gender,
+        order_year,
+        avg_review_count,
+        ROW_NUMBER() OVER(PARTITION BY order_year, gender ORDER BY avg_review_count DESC) AS top_rnk,
+        ROW_NUMBER() OVER(PARTITION BY order_year, gender ORDER BY avg_review_count) AS bottom_rnk
+    FROM category_stats
+)
+
+SELECT
+    order_year,
+    MAX(
+        CASE
+            WHEN gender = 'Male' AND top_rnk = 1 THEN category_name
+        END
+    ) AS men_top_category,
+    MAX(
+        CASE
+            WHEN gender = 'Male' AND bottom_rnk = 1 THEN category_name
+        END
+    ) AS men_bottom_category,
+    MAX(
+        CASE
+            WHEN gender = 'Female' AND top_rnk = 1 THEN category_name
+        END
+    ) AS women_top_category,
+    MAX(
+        CASE
+            WHEN gender = 'Female' AND bottom_rnk = 1 THEN category_name
+        END
+    ) AS women_bottom_category
+FROM ranked_categories
+GROUP BY order_year
+-- Takes advantage of using CASE statements in aggregate functions. Also avoids needing to find MIN and MAX rank by ranking in both directions.
