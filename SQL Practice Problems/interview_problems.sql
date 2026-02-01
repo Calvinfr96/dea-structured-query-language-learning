@@ -323,3 +323,78 @@ WHERE user_id IN (
 -- Simply use the LAG function to create a increasing_value column. For the first row in the column/partition, default to a 1 (true) since there's
 -- no previous value to compare it to. For other rows, compare the current row to the previous and assign a value of 1 or 0 accordingly.
 -- For a strictly increasing column/partition, COUNT(*) = SUM(increasing_value)
+
+
+/*
+  Four Consecutive Days of Listening (Advanced SQL DE Interview Problem)
+
+  Find the users who have logged in for at least 5 months, and who have a strictly increasing monthly responsiveness rate* through the months
+  Columns to Display: user_id, month, current_month_responsiveness, previous_month_responsiveness
+
+  Table: dim_users_spotify
+  user_id
+  name
+  city
+
+  Table: fact_historical_songs_listens
+  user_id
+  song_id
+  song_plays
+
+  Table: fact_weekly_songs_listens
+  listen_id
+  user_id
+  listen_time
+*/
+
+-- Find the names of users who listened to songs on 4 consecutive days.
+-- Only use data from recent listens
+-- Display: name
+-- Step 1: Find users who have recent listened to songs >= 4 times.
+-- Step 2: Of those users find those who listened on >= 4 consecutive days.
+
+-- SELECT * FROM fact_weekly_songs_listens LIMIT 20;
+
+WITH user_daily_listens AS (
+    SELECT
+        dus.user_id,
+        dus.name,
+        DATE(fwsl.listen_time) AS listen_day,
+        COUNT(fwsl.listen_id) AS daily_listens
+    FROM dim_users_spotify dus JOIN fact_weekly_songs_listens fwsl
+    ON dus.user_id = fwsl.user_id
+    GROUP BY dus.user_id, dus.name, DATE(fwsl.listen_time)
+    HAVING COUNT(fwsl.listen_id) > 0
+),
+consecutive_listens AS (
+    SELECT
+        user_id,
+        name,
+        listen_day,
+        (
+            CASE
+                WHEN listen_day = LAG(listen_day, 3) OVER(PARTITION BY user_id ORDER BY listen_day) + INTERVAL 3 DAY THEN 1
+                ELSE 0
+            END
+        ) AS is_consecutive_listen
+    FROM user_daily_listens
+    WHERE user_id IN (
+        SELECT
+            user_id
+        FROM user_daily_listens
+        GROUP BY user_id
+        HAVING COUNT(DISTINCT listen_day) >= 4
+    )
+)
+
+SELECT
+    DISTINCT name
+FROM consecutive_listens
+WHERE user_id IN (
+    SELECT
+        user_id
+    FROM consecutive_listens
+    GROUP BY user_id
+    HAVING SUM(is_consecutive_listen) >= 1
+);
+-- Good example of how to look back four consecutive days without using a self join, showing that window functions can be a good alternative.
