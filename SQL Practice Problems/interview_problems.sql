@@ -711,3 +711,67 @@ SELECT
 FROM ranked_categories
 GROUP BY order_year
 -- Takes advantage of using CASE statements in aggregate functions. Also avoids needing to find MIN and MAX rank by ranking in both directions.
+
+
+/*
+  Brand Sales vs Time Period (Advanced SQL DE Interview Problem)
+
+  List down brand wise cumulative sales month over month, but separated for years. Output should be limited to 2 decimals. Only completed orders to be taken. Limit to only January and February months.
+  Columns to Display: brand, year, month_name(Jan, Feb), cumulative_sales
+
+  Table: shopify_customer
+  order_id
+  customer_id
+  phone_id
+  order_time
+  order_status
+
+  Table: shopify_order_history
+  phone_id
+  phone_names
+  price_usd
+*/
+
+-- List brand-wise, cumulative, month-over-month sales for each year.
+-- Limit output to 2 decimal places.
+-- Only completed orders in January and February should be considered.
+-- Display: brand, year, month_name, cumulative_sales
+-- Step 1: Join the tables using INNER JOIN.
+-- Step 2: Filter results down to completed orders in Jan and Feb
+-- Step 3: For each year, calculated the month-over-month cumulative sales
+-- for each brand.
+
+-- SELECT DISTINCT order_status FROM dim_phoneOrders_apple;
+-- DATE_FORMAT(order_time, '%b')
+
+WITH monthly_sales AS (
+    SELECT
+        SUBSTRING_INDEX(phones.phone_names, ' - ', 1) AS brand,
+        YEAR(order_time) AS year,
+        MONTH(order_time) AS month,
+        DATE_FORMAT(order_time, '%b') AS month_name,
+        SUM(phones.price_usd) AS monthly_sales
+    FROM dim_phones_apple phones
+    JOIN dim_phoneOrders_apple orders
+        ON phones.phone_id = orders.phone_id
+    WHERE
+        orders.order_status = 'Completed'
+        AND MONTH(order_time) IN ('01', '02')
+    GROUP BY
+        SUBSTRING_INDEX(phones.phone_names, '-', 1),
+        YEAR(order_time),
+        MONTH(order_time),
+        DATE_FORMAT(order_time, '%b')
+)
+
+SELECT
+    brand,
+    year,
+    month_name,
+    FORMAT(
+        SUM(monthly_sales) OVER(PARTITION BY brand, year ORDER BY year, month),
+        2
+    ) AS cumulative_sales
+FROM monthly_sales;
+-- Good example of needing to read the question and *analyze the data* carefully. Initially, we just used phone_names as the brand, instead of the part before the slash.
+-- Also a good example of using SUBSTRING_INDEX, DATE_FORMAT, and FORMAT. FORMAT is similar to ROUND, except it adds commas to the number where needed.
